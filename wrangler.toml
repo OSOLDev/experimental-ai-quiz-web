@@ -1,0 +1,11 @@
+name = "quiz-backend"
+main = "src/index.js"
+compatibility_date = "2024-03-07"
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+
+[[kv_namespaces]]
+binding = "KV_STORE"
+id = "YOUR_KV_NAMESPACE_ID_HERE"
