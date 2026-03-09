@@ -53,18 +53,18 @@ async function callLLM(provider, model, prompt, requireJson, env) {
         const apiKey = provider === 'groq' ? env.GROQ_API_KEY : env.CEREBRAS_API_KEY;
         if (!apiKey) throw new Error(`${provider.toUpperCase()}_API_KEY missing`);
 
-        const baseUrl = provider === 'groq' 
-            ? 'https://api.groq.com/openai/v1/chat/completions' 
+        const baseUrl = provider === 'groq'
+            ? 'https://api.groq.com/openai/v1/chat/completions'
             : 'https://api.cerebras.ai/v1/chat/completions';
 
         const payload = {
             model: model,
             messages: [
-                { 
-                    role: "system", 
-                    content: requireJson 
-                        ? "You are an API that outputs strict, valid JSON. Ensure your response matches the exact structure requested without markdown formatting." 
-                        : "You are a helpful AI assistant." 
+                {
+                    role: "system",
+                    content: requireJson
+                        ? "You are an API that outputs strict, valid JSON. Ensure your response matches the exact structure requested without markdown formatting."
+                        : "You are a helpful AI assistant."
                 },
                 { role: "user", content: prompt }
             ]
@@ -109,7 +109,7 @@ async function executeWithPrecedence(prompt, requireJson, env) {
 
         try {
             const textContent = await callLLM(currentModel.provider, currentModel.id, prompt, requireJson, env);
-            
+
             if (textContent) {
                 console.log(`[Router] Success using ${currentModel.provider} / ${currentModel.id}`);
                 return textContent;
@@ -117,16 +117,16 @@ async function executeWithPrecedence(prompt, requireJson, env) {
         } catch (error) {
             console.error(`[Router] Failure on ${currentModel.provider} / ${currentModel.id}:`, error.message);
             lastError = error;
-            
+
             // Rotate the failed model to the end of the array
             const failedModel = models.splice(i, 1)[0];
             models.push(failedModel);
-            
+
             // Commit the new precedence order to KV
             await env.KV_STORE.put('MODEL_PRECEDENCE', JSON.stringify(models));
-            
+
             // Adjust loop index since we shifted the array left
-            i--; 
+            i--;
         }
     }
 
@@ -149,8 +149,8 @@ export default {
 
         if (url.pathname.startsWith('/api/generate')) {
             if (request.method !== 'POST') {
-                return new Response(JSON.stringify({ error: `Method ${request.method} not allowed` }), { 
-                    status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+                return new Response(JSON.stringify({ error: `Method ${request.method} not allowed` }), {
+                    status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
                 });
             }
 
@@ -159,24 +159,24 @@ export default {
                 const { topic } = body;
                 const count = [5, 15, 30, 50].includes(Number(body.count)) ? Number(body.count) : 50;
                 if (!topic) {
-                    return new Response(JSON.stringify({ error: 'Topic is required' }), { 
-                        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+                    return new Response(JSON.stringify({ error: 'Topic is required' }), {
+                        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
                     });
                 }
 
                 // Explicit JSON instruction in prompt acts as a fallback for models that don't strictly adhere to JSON mode
                 const prompt = `Create a professional, challenging multiple-choice quiz about "${topic}". Provide exactly ${count} questions — no more, no fewer. The correct answer must perfectly match one of the options exactly. You must output strictly valid JSON matching this schema: { "questions": [ { "question": "...", "options": ["...", "...", "...", "..."], "correctAnswer": "..." } ] }`;
-                
+
                 const resultText = await executeWithPrecedence(prompt, true, env);
 
-                return new Response(resultText, { 
-                    headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+                return new Response(resultText, {
+                    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
                 });
 
             } catch (error) {
                 console.error("[API Error] /api/generate:", error.message);
-                return new Response(JSON.stringify({ error: error.message }), { 
-                    status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+                return new Response(JSON.stringify({ error: error.message }), {
+                    status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
                 });
             }
         }
