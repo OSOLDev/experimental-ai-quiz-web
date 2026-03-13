@@ -1,40 +1,69 @@
 /**
  * AJK PSC Exam Preparation Platform — Cloudflare Worker
- * ═══════════════════════════════════════════════════════
+ * ═══════════════════════════════════════════════════════════════════════════
  * Zero Firebase. All data in Cloudflare KV.
+ *
+ * PAGE ROUTES (all serve index.html — SPA with History API routing)
+ * ─────────────────────────────────────────────────────────────────
+ * /                          Landing page
+ * /user/account              User login
+ * /user/dashboard            User dashboard
+ * /user/topics               Topic selection
+ * /quizzes/create            Quiz configuration
+ * /quizzes                   Public quiz library
+ * /quizzes/:id               Quiz attempt / preview
+ * /quizzes/:id/results       Quiz results for current user
+ * /admin/account             Admin login
+ * /admin/dashboard           Admin dashboard
+ * /admin/users               Admin user management
+ * /admin/results             Admin results
+ * /admin/quizzes             Admin quiz library
+ *
+ * API ROUTES
+ * ──────────
+ * POST   /api/auth/login
+ * GET    /api/users              (admin)
+ * POST   /api/users              (admin)
+ * GET    /api/users/:uid         (admin)
+ * PUT    /api/users/:uid         (admin)
+ * DELETE /api/users/:uid         (admin)
+ * GET    /api/results            (admin)
+ * GET    /api/results/:id        (auth — own result only, or admin)
+ * POST   /api/results            (auth)
+ * GET    /api/stats              (admin)
+ * POST   /api/generate           (auth)
+ * GET    /api/quizzes/public     (public — paginated metadata)
+ * GET    /api/quizzes            (admin — filter by topic/lang/count)
+ * GET    /api/quizzes/:id        (auth — full quiz with answers)
+ * GET    /api/quizzes/:id?preview=1  (public — quiz without answers)
  *
  * KV KEY SCHEMA
  * ─────────────
- * user:email:{email}       → string uid          (email→uid index)
- * user:id:{uid}            → JSON User           (primary user record)
- * users:index              → JSON string[]       (all uids, ordered)
- *
- * result:id:{resultId}     → JSON Result         (primary result record)
- * results:index            → JSON string[]       (all resultIds, newest last)
- * results:user:{uid}       → JSON string[]       (per-user resultIds)
- *
- * meta:model_precedence    → JSON Model[]        (AI model routing order)
- *
- * USER   { uid, name, email, passwordHash, phone, startDate, expiryDate,
- *          topics[], additionalNotes, createdAt, updatedAt }
- * RESULT { resultId, userId, userName, userEmail, profession, professionLabel,
- *          score, total, percentage, pass, wrong, skipped, timeTaken,
- *          createdAt, answers[] }
+ * user:email:{email}                          → string uid
+ * user:id:{uid}                               → JSON User
+ * users:index                                 → JSON string[]
+ * result:id:{resultId}                        → JSON Result
+ * results:index                               → JSON string[]
+ * results:user:{uid}                          → JSON string[]
+ * meta:model_precedence                       → JSON Model[]
+ * quiz:id:{quizId}                            → JSON Quiz
+ * quizzes:index                               → JSON string[] (newest last, cap 5000)
+ * quizzes:topic:{key}:lang:{l}:count:{n}      → JSON string[] (per-bucket, cap 1000)
+ * quizzes:user:{uid}                          → JSON string[] (per-user, cap 1500)
  */
 
-/* ═══ CRYPTO ═════════════════════════════════════════════════════════════ */
+/* ═══ CRYPTO ════════════════════════════════════════════════════════════════ */
 
 async function hashPassword(plain) {
     const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(plain));
     return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
 }
-async function verifyPassword(plain, hash) {
-    return (await hashPassword(plain)) === hash;
-}
-function uid()      { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
-function rid()      { return 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+async function verifyPassword(plain, hash) { return (await hashPassword(plain)) === hash; }
+function uid()  { return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function rid()  { return 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function qid()  { return 'q_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 
-/* ═══ SESSION TOKENS ═════════════════════════════════════════════════════ */
+/* ═══ SESSION TOKENS ════════════════════════════════════════════════════════ */
 
 async function makeToken(id, secret) {
     const payload = `${id}:${Date.now()}`;
@@ -44,7 +73,6 @@ async function makeToken(id, secret) {
     const hex = [...new Uint8Array(sig)].map(b=>b.toString(16).padStart(2,'0')).join('');
     return btoa(`${payload}:${hex}`);
 }
-
 async function readToken(token, secret) {
     try {
         const dec  = atob(token);
@@ -61,7 +89,7 @@ async function readToken(token, secret) {
     } catch { return null; }
 }
 
-/* ═══ KV DATA LAYER ══════════════════════════════════════════════════════ */
+/* ═══ KV HELPERS ════════════════════════════════════════════════════════════ */
 
 async function kvGet(kv, key) {
     const v = await kv.get(key, 'text');
@@ -73,7 +101,19 @@ async function kvSet(kv, key, val) {
 }
 async function kvDel(kv, key) { await kv.delete(key); }
 
-/* -- Users -- */
+function normalizeTopicKey(topic, professionId) {
+    if (professionId) return `pid:${professionId}`;
+    const t = (topic||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+    return `t:${t||'general'}`;
+}
+function normalizeLangKey(lang) {
+    return (lang||'').toLowerCase().startsWith('ur') ? 'ur' : 'en';
+}
+function quizIndexKey(topicKey, langKey, count) {
+    return `quizzes:topic:${topicKey}:lang:${langKey}:count:${count}`;
+}
+
+/* ── Users ── */
 async function getUser(kv, id)       { return kvGet(kv, `user:id:${id}`); }
 async function getUserByEmail(kv, e) {
     const id = await kv.get(`user:email:${e.toLowerCase().trim()}`, 'text');
@@ -100,7 +140,7 @@ async function listUsers(kv) {
     return (await Promise.all(idx.map(id => getUser(kv, id)))).filter(Boolean);
 }
 
-/* -- Results -- */
+/* ── Results ── */
 async function saveResult(kv, r) {
     await kvSet(kv, `result:id:${r.resultId}`, r);
     let gi = await kvGet(kv, 'results:index') || [];
@@ -115,18 +155,65 @@ async function listResults(kv, limit = 200) {
     const idx = (await kvGet(kv, 'results:index') || []).slice(-limit).reverse();
     return (await Promise.all(idx.map(id => kvGet(kv, `result:id:${id}`)))).filter(Boolean);
 }
+async function getResult(kv, id) { return kvGet(kv, `result:id:${id}`); }
 
-/* -- Stats -- */
+/* ── Quizzes ── */
+async function getQuiz(kv, id) { return kvGet(kv, `quiz:id:${id}`); }
+async function addQuizIndex(kv, key, id, max = 1000) {
+    let idx = await kvGet(kv, key) || [];
+    if (!idx.includes(id)) {
+        idx.push(id);
+        if (idx.length > max) idx = idx.slice(-max);
+        await kvSet(kv, key, idx);
+    }
+    return idx;
+}
+async function addUserQuiz(kv, u, quizId) {
+    return addQuizIndex(kv, `quizzes:user:${u}`, quizId, 1500);
+}
+async function saveQuiz(kv, q) {
+    await kvSet(kv, `quiz:id:${q.quizId}`, q);
+    await addQuizIndex(kv, 'quizzes:index', q.quizId, 5000);
+    await addQuizIndex(kv, quizIndexKey(q.topicKey, q.lang, q.count), q.quizId, 1000);
+}
+async function pickCachedQuiz(kv, {topicKey, langKey, count, userId}) {
+    const idxKey = quizIndexKey(topicKey, langKey, count);
+    let ids = await kvGet(kv, idxKey) || [];
+    if (!ids.length) return null;
+    let pool = ids;
+    if (userId) {
+        const seen = await kvGet(kv, `quizzes:user:${userId}`) || [];
+        if (seen.length) {
+            const seenSet = new Set(seen);
+            const filtered = ids.filter(id => !seenSet.has(id));
+            if (filtered.length) pool = filtered;
+        }
+    }
+    for (let tries = 0; tries < 5 && pool.length; tries++) {
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        const quiz = await getQuiz(kv, pick);
+        if (quiz) return quiz;
+        ids = ids.filter(id => id !== pick);
+        pool = pool.filter(id => id !== pick);
+    }
+    if (ids.length) await kvSet(kv, idxKey, ids);
+    return null;
+}
+
+/* ── Stats ── */
 async function getStats(kv) {
     const [users, results] = await Promise.all([listUsers(kv), listResults(kv, 1000)]);
     const today = new Date(); today.setHours(0,0,0,0);
-    const active = users.filter(u => { const e = new Date(u.expiryDate); e.setHours(0,0,0,0); return e >= today; }).length;
+    const active = users.filter(u => {
+        const e = new Date(u.expiryDate); e.setHours(0,0,0,0); return e >= today;
+    }).length;
     const avg = results.length
         ? parseFloat((results.reduce((s,r)=>s+(r.percentage||0),0)/results.length).toFixed(1)) : 0;
-    return { totalUsers: users.length, activeUsers: active, totalResults: results.length, avgScore: avg };
+    const totalQuizzes = (await kvGet(kv, 'quizzes:index') || []).length;
+    return { totalUsers: users.length, activeUsers: active, totalResults: results.length, avgScore: avg, totalQuizzes };
 }
 
-/* ═══ AUTH HELPERS ═══════════════════════════════════════════════════════ */
+/* ═══ AUTH HELPERS ══════════════════════════════════════════════════════════ */
 
 async function authUser(req, env) {
     const tok = (req.headers.get('Authorization')||'').replace('Bearer ','').trim();
@@ -143,18 +230,18 @@ async function authAdmin(req, env) {
     return (u && (u.role==='admin' || u.uid==='admin')) ? u : null;
 }
 
-/* ═══ RESPONSE HELPERS ═══════════════════════════════════════════════════ */
+/* ═══ RESPONSE HELPERS ══════════════════════════════════════════════════════ */
 
 const CORS = {
-    'Access-Control-Allow-Origin':'*',
-    'Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS',
-    'Access-Control-Allow-Headers':'Content-Type,Authorization',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
 };
 const ok  = (d, s=200) => new Response(JSON.stringify(d), {status:s, headers:{...CORS,'Content-Type':'application/json'}});
 const bad = (m, s=400) => ok({error:m}, s);
 function safe(u) { if (!u) return null; const {passwordHash:_,password:__,...r}=u; return r; }
 
-/* ═══ LLM ROUTER ═════════════════════════════════════════════════════════ */
+/* ═══ LLM ROUTER ════════════════════════════════════════════════════════════ */
 
 const DEFAULT_MODELS = [
     { provider:'gemini',   id:'gemini-2.0-flash-lite' },
@@ -189,7 +276,7 @@ async function callLLM(provider, model, prompt, env) {
             : 'https://api.cerebras.ai/v1/chat/completions';
         const r = await fetch(url, {method:'POST',
             headers:{'Authorization':`Bearer ${k}`,'Content-Type':'application/json'},
-            body:JSON.stringify({model,response_format:{type:'json_object'},
+            body:JSON.stringify({model, response_format:{type:'json_object'},
                 messages:[
                     {role:'system',content:'Expert exam writer. Output valid JSON only, no markdown, no preamble.'},
                     {role:'user',content:prompt}
@@ -220,7 +307,7 @@ async function generate(prompt, env) {
     throw new Error(`All AI models failed. ${last?.message}`);
 }
 
-/* ═══ ROUTE HANDLERS ═════════════════════════════════════════════════════ */
+/* ═══ API HANDLERS ══════════════════════════════════════════════════════════ */
 
 async function routeLogin(req, env) {
     const {email='', password=''} = await req.json().catch(()=>({}));
@@ -306,6 +393,14 @@ async function routeListResults(req, env) {
     const lim = Math.min(parseInt(new URL(req.url).searchParams.get('limit'))||200,500);
     return ok(await listResults(env.KV_STORE, lim));
 }
+async function routeGetResult(req, env, id) {
+    const u = await authUser(req, env);
+    if (!u) return bad('Unauthorized',401);
+    const r = await getResult(env.KV_STORE, id);
+    if (!r) return bad('Not found',404);
+    if (u.role !== 'admin' && r.userId !== u.uid) return bad('Forbidden',403);
+    return ok(r);
+}
 async function routeSaveResult(req, env) {
     const u = await authUser(req,env);
     if (!u) return bad('Unauthorized',401);
@@ -317,10 +412,11 @@ async function routeSaveResult(req, env) {
         score:+b.score, total:+b.total, percentage:parseFloat(b.percentage)||0,
         pass:!!b.pass, wrong:+b.wrong||0, skipped:+b.skipped||0,
         timeTaken:b.timeTaken||'', createdAt:new Date().toISOString(),
-        answers:b.answers||[]
+        answers:b.answers||[], quizId:b.quizId||null, quizSource:b.quizSource||null
     };
     await saveResult(env.KV_STORE, r);
-    return ok({ok:true,resultId:r.resultId},201);
+    if (r.quizId) await addUserQuiz(env.KV_STORE, u.uid, r.quizId);
+    return ok({ok:true, resultId:r.resultId, path:`/quizzes/${r.quizId}/results?uid=${u.uid}`}, 201);
 }
 
 async function routeStats(req, env) {
@@ -338,6 +434,9 @@ async function routeGenerate(req, env) {
     if (u.uid!=='admin' && professionId && !(u.topics||[]).includes(professionId))
         return bad('Access denied for this topic',403);
     const isUrdu = lang==='Urdu';
+    const topicKey = normalizeTopicKey(topic, professionId);
+    const langKey = normalizeLangKey(lang||'English');
+
     const prompt = `You are an expert exam question writer for the AJK (Azad Jammu & Kashmir) Public Service Commission.
 
 Topic: ${topic}
@@ -352,6 +451,7 @@ Rules:
 - correctAnswer must be a byte-for-byte copy of one option string.
 - Vary question types: definition, application, analysis, comparison.
 - No option labels like A. B. C. D. in the options strings.
+- For any mathematical expressions, use LaTeX wrapped in $...$ (inline) or $$...$$ (display).
 
 Return ONLY valid JSON, no markdown:
 {"questions":[{"question":"...","options":["...","...","...","..."],"correctAnswer":"..."}]}`;
@@ -362,75 +462,177 @@ Return ONLY valid JSON, no markdown:
         try { parsed=JSON.parse(raw); }
         catch { parsed=JSON.parse(raw.replace(/```json|```/g,'').trim()); }
         if (!Array.isArray(parsed?.questions)) throw new Error('Invalid structure');
-        const valid = parsed.questions.filter(q =>
-            q.question?.trim() && Array.isArray(q.options) && q.options.length>=2 &&
+        let valid = parsed.questions.filter(q =>
+            q.question?.trim() && Array.isArray(q.options) && q.options.length===4 &&
             q.correctAnswer?.trim() && q.options.includes(q.correctAnswer));
         if (!valid.length) throw new Error('No valid questions returned');
-        return ok({questions:valid});
+        if (valid.length > count) valid = valid.slice(0, count);
+        if (valid.length < count) throw new Error(`AI returned ${valid.length} questions (expected ${count})`);
+        const quizId = qid();
+        const quizObj = {
+            quizId, topic, topicKey, professionId: professionId||null,
+            lang: langKey, count: valid.length,
+            questions: valid, createdAt: new Date().toISOString(), createdBy: u.uid
+        };
+        await saveQuiz(env.KV_STORE, quizObj);
+        await addUserQuiz(env.KV_STORE, u.uid, quizId);
+        return ok({quizId, questions: valid, source:'ai', path:`/quizzes/${quizId}`});
     } catch(e) {
         console.error('[generate]',e.message);
+        const cached = await pickCachedQuiz(env.KV_STORE, {topicKey, langKey, count, userId: u.uid});
+        if (cached) {
+            await addUserQuiz(env.KV_STORE, u.uid, cached.quizId);
+            return ok({quizId: cached.quizId, questions: cached.questions, source:'cache', path:`/quizzes/${cached.quizId}`});
+        }
         return bad(e.message, 502);
     }
 }
 
-/* ═══ MAIN EXPORT ════════════════════════════════════════════════════════ */
+/* Public paginated quiz list — metadata only, no answers */
+async function routePublicQuizzes(req, env) {
+    const url = new URL(req.url);
+    const professionId = url.searchParams.get('professionId')||'';
+    const lang = url.searchParams.get('lang')||'';
+    const limit = Math.min(parseInt(url.searchParams.get('limit')||'24')||24, 100);
+    const offset = parseInt(url.searchParams.get('offset')||'0')||0;
+
+    let ids = (await kvGet(env.KV_STORE, 'quizzes:index') || []).reverse();
+
+    if (professionId || lang) {
+        const all = await Promise.all(ids.slice(0, 500).map(id => getQuiz(env.KV_STORE, id)));
+        let filtered = all.filter(Boolean);
+        if (professionId) filtered = filtered.filter(q => q.professionId === professionId);
+        if (lang) filtered = filtered.filter(q => q.lang === normalizeLangKey(lang));
+        const page = filtered.slice(offset, offset + limit);
+        return ok({
+            total: filtered.length,
+            quizzes: page.map(q => ({quizId:q.quizId, topic:q.topic, professionId:q.professionId, lang:q.lang, count:q.count, createdAt:q.createdAt}))
+        });
+    }
+
+    const total = ids.length;
+    const page = ids.slice(offset, offset + limit);
+    const quizzes = (await Promise.all(page.map(id => getQuiz(env.KV_STORE, id)))).filter(Boolean)
+        .map(q => ({quizId:q.quizId, topic:q.topic, professionId:q.professionId, lang:q.lang, count:q.count, createdAt:q.createdAt}));
+    return ok({total, quizzes});
+}
+
+/* Admin quiz list — filtered by topic/lang/count */
+async function routeListQuizzes(req, env) {
+    if (!await authAdmin(req,env)) return bad('Unauthorized',401);
+    const url = new URL(req.url);
+    const topic = url.searchParams.get('topic')||'';
+    const professionId = url.searchParams.get('professionId')||'';
+    const lang = url.searchParams.get('lang')||'';
+    const count = parseInt(url.searchParams.get('count')||'0')||0;
+    if (!topic && !professionId) return bad('topic or professionId required');
+    if (!count) return bad('count required');
+    const topicKey = normalizeTopicKey(topic, professionId);
+    const langKey = normalizeLangKey(lang);
+    const idxKey = quizIndexKey(topicKey, langKey, count);
+    const limit = Math.min(parseInt(url.searchParams.get('limit')||'50')||50, 200);
+    const ids = (await kvGet(env.KV_STORE, idxKey) || []).slice(-limit).reverse();
+    const quizzes = (await Promise.all(ids.map(id => getQuiz(env.KV_STORE, id)))).filter(Boolean)
+        .map(q => ({quizId:q.quizId, topic:q.topic, professionId:q.professionId, lang:q.lang, count:q.count, createdAt:q.createdAt}));
+    return ok({quizzes});
+}
+
+/* Single quiz fetch */
+async function routeGetQuiz(req, env, id) {
+    const url = new URL(req.url);
+    const preview = url.searchParams.get('preview') === '1';
+
+    if (preview) {
+        // Public preview — return quiz without correct answers
+        const q = await getQuiz(env.KV_STORE, id);
+        if (!q) return bad('Not found',404);
+        return ok({...q, questions: (q.questions||[]).map(({question,options}) => ({question,options}))});
+    }
+
+    const u = await authUser(req, env);
+    if (!u) return bad('Unauthorized',401);
+    const q = await getQuiz(env.KV_STORE, id);
+    if (!q) return bad('Not found',404);
+    if (u.role !== 'admin') {
+        if (q.professionId && !(u.topics||[]).includes(q.professionId))
+            return bad('Forbidden — topic not in your plan',403);
+    }
+    return ok(q);
+}
+
+/* ═══ ROUTING ════════════════════════════════════════════════════════════════ */
+
+/* All SPA page paths — served as index.html */
+function isSpaRoute(p) {
+    if ([
+        '/',
+        '/user/account', '/user/dashboard', '/user/topics',
+        '/quizzes', '/quizzes/create',
+        '/admin/account', '/admin/dashboard', '/admin/users', '/admin/results', '/admin/quizzes',
+    ].includes(p)) return true;
+    if (/^\/quizzes\/[^/]+$/.test(p)) return true;           // /quizzes/:id
+    if (/^\/quizzes\/[^/]+\/results$/.test(p)) return true;  // /quizzes/:id/results
+    return false;
+}
+
+async function serveSpa(request, env, url) {
+    try {
+        return env.ASSETS.fetch(
+            new Request(new URL('/', url.origin).toString(), { method:'GET', headers: request.headers })
+        );
+    } catch {
+        return new Response('Not Found', {status:404});
+    }
+}
 
 export default {
     async fetch(request, env) {
         const url = new URL(request.url);
         const p = url.pathname, m = request.method;
 
-        if (m==='OPTIONS') return new Response(null,{headers:CORS});
+        if (m === 'OPTIONS') return new Response(null, {headers: CORS});
 
-        /* Auth */
-        if (p==='/api/auth/login'     && m==='POST')   return routeLogin(request,env);
+        /* ── API ── */
+        if (p === '/api/auth/login'     && m==='POST') return routeLogin(request, env);
 
-        /* Users */
-        if (p==='/api/users'          && m==='GET')    return routeListUsers(request,env);
-        if (p==='/api/users'          && m==='POST')   return routeCreateUser(request,env);
+        if (p === '/api/users'          && m==='GET')  return routeListUsers(request, env);
+        if (p === '/api/users'          && m==='POST') return routeCreateUser(request, env);
         const um = p.match(/^\/api\/users\/([^/]+)$/);
         if (um) {
-            if (m==='GET')    return routeGetUser(request,env,um[1]);
-            if (m==='PUT')    return routeUpdateUser(request,env,um[1]);
-            if (m==='DELETE') return routeDeleteUser(request,env,um[1]);
+            if (m==='GET')    return routeGetUser(request, env, um[1]);
+            if (m==='PUT')    return routeUpdateUser(request, env, um[1]);
+            if (m==='DELETE') return routeDeleteUser(request, env, um[1]);
         }
 
-        /* Results */
-        if (p==='/api/results'        && m==='GET')    return routeListResults(request,env);
-        if (p==='/api/results'        && m==='POST')   return routeSaveResult(request,env);
+        if (p === '/api/results'        && m==='GET')  return routeListResults(request, env);
+        if (p === '/api/results'        && m==='POST') return routeSaveResult(request, env);
+        const rm = p.match(/^\/api\/results\/([^/]+)$/);
+        if (rm && m==='GET') return routeGetResult(request, env, rm[1]);
 
-        /* Stats */
-        if (p==='/api/stats'          && m==='GET')    return routeStats(request,env);
+        if (p === '/api/stats'          && m==='GET')  return routeStats(request, env);
+        if (p === '/api/generate'       && m==='POST') return routeGenerate(request, env);
 
-        /* Quiz */
-        if (p==='/api/generate'       && m==='POST')   return routeGenerate(request,env);
+        if (p === '/api/quizzes/public' && m==='GET')  return routePublicQuizzes(request, env);
+        if (p === '/api/quizzes'        && m==='GET')  return routeListQuizzes(request, env);
+        const qm = p.match(/^\/api\/quizzes\/([^/]+)$/);
+        if (qm && m==='GET') return routeGetQuiz(request, env, qm[1]);
 
-        /* LLM health */
-        if (p.startsWith('/api/test')||p.startsWith('/test')) {
-            const llm=url.searchParams.get('llm');
+        /* ── LLM health check ── */
+        if (p.startsWith('/api/test')) {
+            const llm = url.searchParams.get('llm');
             if (!['groq','gemini','cerebras'].includes(llm)) return ok({ok:false,error:'Invalid ?llm='},400);
-            const model=DEFAULT_MODELS.find(x=>x.provider===llm);
+            const model = DEFAULT_MODELS.find(x=>x.provider===llm);
             try {
                 const r = await callLLM(llm, model.id, 'Say: true', env);
                 return ok({ok:true,llm,model:model.id,reply:r?.trim()});
             } catch(e) { return ok({ok:false,error:e.message},502); }
         }
 
-        /* SPA fallback */
-        try {
-            const isPage = (request.headers.get('Accept')||'').includes('text/html') ||
-                           (!p.includes('.')&&!p.startsWith('/api/'));
-            if (isPage) {
-                if (p.startsWith('/admin')) {
-                    const tab = p.replace('/admin','').replace(/^\//,'') || 'dashboard';
-                    return Response.redirect(new URL(`/#admin/${tab}`,url.origin).toString(),302);
-                }
-                return env.ASSETS.fetch(new Request(new URL('/',url.origin).toString(),request));
-            }
-            return env.ASSETS.fetch(request);
-        } catch {
-            try { return env.ASSETS.fetch(new Request(new URL('/',url.origin).toString(),request)); }
-            catch { return new Response('Not Found',{status:404}); }
-        }
+        /* ── SPA page routes ── serve index.html ── */
+        if (isSpaRoute(p)) return serveSpa(request, env, url);
+
+        /* ── Static assets ── */
+        try { return env.ASSETS.fetch(request); }
+        catch { return new Response('Not Found', {status:404}); }
     }
 };

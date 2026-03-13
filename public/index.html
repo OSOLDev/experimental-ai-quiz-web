@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500;8..60,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" rel="stylesheet" />
 <style>
     :root {
       --emerald-50: #ecfdf5;
@@ -420,6 +421,11 @@
       display: grid; place-items: center; font-size: 12px; font-weight: 700;
       font-family: var(--font-mono); flex-shrink: 0; opacity: .7;
     }
+    .md p { margin: 0; }
+    .md ul, .md ol { margin: 6px 0 0 18px; }
+    .md code { font-family: var(--font-mono); background: var(--bg-muted); padding: 0 4px; border-radius: 4px; }
+    .md pre { background: var(--bg-muted); padding: 8px; border-radius: 6px; overflow-x: auto; }
+    .option-text { display: inline-block; }
     .question-nav {
       padding: 16px 24px; border-top: 1px solid var(--border);
       display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -686,11 +692,136 @@
     .toast.info { border-inline-start: 3px solid var(--accent); }
   </style>
 </head>
+  <style>
+    /* ─── LANDING PAGE ─── */
+    .landing-hero {
+      min-height: 100dvh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      background: var(--bg);
+    }
+    .landing-nav {
+      position: sticky; top: 0; z-index: 50;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      height: 58px; display: flex; align-items: center;
+    }
+    .landing-nav-inner {
+      width: 100%; max-width: 1200px; margin: 0 auto;
+      padding: 0 24px; display: flex; align-items: center; gap: 16px;
+    }
+    .landing-nav-links { display: flex; align-items: center; gap: 4px; flex: 1; margin-inline-start: 24px; }
+    .nav-link {
+      padding: 6px 14px; border-radius: var(--radius-md); font-size: 13px;
+      color: var(--fg-muted); text-decoration: none; cursor: pointer;
+      transition: all 100ms; font-weight: 500; background: none; border: none;
+    }
+    .nav-link:hover { background: var(--bg-muted); color: var(--fg); }
+    .nav-link.active { background: var(--accent-subtle); color: var(--accent); }
+    .landing-main {
+      max-width: 1200px; margin: 0 auto; width: 100%;
+      padding: 80px 24px 60px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+    }
+    @media (max-width: 860px) { .landing-main { grid-template-columns: 1fr; padding: 40px 24px; gap: 40px; } }
+    .landing-headline {
+      font-family: var(--font-serif); font-size: clamp(32px,5vw,52px);
+      font-weight: 700; line-height: 1.15; color: var(--fg);
+      letter-spacing: -0.02em;
+    }
+    .landing-headline em { color: var(--accent); font-style: normal; }
+    .landing-sub {
+      font-size: 16px; color: var(--fg-muted); line-height: 1.7;
+      max-width: 480px; margin-top: 16px;
+    }
+    .landing-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; }
+    .landing-features { display: flex; flex-direction: column; gap: 14px; margin-top: 36px; }
+    .landing-feat {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 14px; color: var(--fg-muted);
+    }
+    .landing-feat-icon {
+      width: 32px; height: 32px; border-radius: var(--radius-md);
+      background: var(--accent-subtle); color: var(--accent);
+      display: grid; place-items: center; font-size: 13px; flex-shrink: 0;
+    }
+    .landing-card {
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: var(--radius-2xl); padding: 32px;
+      box-shadow: var(--shadow-xl);
+    }
+    .landing-card-title { font-family: var(--font-serif); font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+    .landing-contact-line { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .landing-contact-line:last-child { border-bottom: none; }
+    .landing-contact-icon { width: 34px; height: 34px; border-radius: var(--radius-md); background: var(--accent-subtle); color: var(--accent); display: grid; place-items: center; font-size: 13px; flex-shrink: 0; }
+    .landing-footer {
+      border-top: 1px solid var(--border); padding: 20px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; color: var(--fg-subtle); max-width: 1200px;
+      margin: 0 auto; width: 100%;
+    }
+
+    /* ─── QUIZ LIBRARY (public) ─── */
+    .quiz-lib-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); }
+    .quiz-lib-card {
+      background: var(--bg-elevated); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 20px;
+      cursor: pointer; transition: all 150ms; text-decoration: none;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .quiz-lib-card:hover { border-color: var(--accent-border); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    .quiz-lib-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .quiz-lib-card-title { font-weight: 600; font-size: 14px; line-height: 1.4; }
+    .quiz-lib-card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+    .quiz-lib-card-date { font-size: 11px; color: var(--fg-subtle); font-family: var(--font-mono); margin-top: auto; }
+
+    /* ─── QUIZ ATTEMPT PAGE ─── */
+    .quiz-page-header {
+      background: var(--bg-elevated); border-bottom: 1px solid var(--border);
+      padding: 12px 24px; display: flex; align-items: center;
+      gap: 12px; position: sticky; top: 58px; z-index: 30;
+    }
+    .quiz-page-progress { flex: 1; }
+    .quiz-page-timer { font-family: var(--font-mono); font-size: 13px; color: var(--fg-muted); }
+
+    /* ─── USER DASHBOARD ─── */
+    .dashboard-grid { display: grid; gap: 24px; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
+    .dashboard-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 24px; }
+    .dashboard-card-title { font-family: var(--font-serif); font-size: 17px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    /* ─── BREADCRUMB NAV ─── */
+    .page-breadcrumb {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--fg-muted); margin-bottom: 8px; flex-wrap: wrap;
+    }
+    .page-breadcrumb a, .page-breadcrumb span[data-nav] {
+      color: var(--fg-muted); text-decoration: none; cursor: pointer;
+    }
+    .page-breadcrumb a:hover, .page-breadcrumb span[data-nav]:hover { color: var(--accent); }
+    .page-breadcrumb .sep { color: var(--fg-subtle); }
+    .page-breadcrumb .current { color: var(--fg); }
+
+    /* ─── RESULT SHARE BAR ─── */
+    .result-share-bar {
+      background: var(--bg-elevated); border: 1px solid var(--accent-border);
+      border-radius: var(--radius-lg); padding: 12px 16px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .result-share-url {
+      flex: 1; font-family: var(--font-mono); font-size: 11px;
+      color: var(--fg-muted); overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; min-width: 0;
+    }
+    .toast.warn { border-inline-start: 3px solid var(--warning); }
+  </style>
+</head>
 <body>
   <div id="root">
-    <nav class="topbar">
+    <nav class="topbar" id="main-topbar">
       <div class="topbar-inner">
-        <a class="brand" href="#">
+        <a class="brand" href="/" onclick="navigate(event,'/')">
           <div class="brand-mark"><i class="fa-solid fa-graduation-cap"></i></div>
           <div class="brand-text">
             <span class="brand-name" id="brand-name-text">AJK PSC Prep</span>
@@ -737,9 +868,13 @@
 
   <div class="toast-container" id="toast-container"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
   <script>
 /* ═══════════════════════════════════════════════════════════════════════
-   AJK PSC EXAM PREP — Zero Firebase, Pure KV API
+   AJK PSC EXAM PREP  ·  Multi-page SPA with History API routing
 ═══════════════════════════════════════════════════════════════════════ */
 
 /* ── Professions ── */
@@ -806,7 +941,7 @@ const T = {
     user_status:"Status",user_actions:"Actions",
     no_users:"No users yet.",no_results:"No results yet.",
     status_active:"Active",status_expired:"Expired",status_soon:"Expiring soon",
-    time:"Time",
+    time:"Time",quiz_id:"Quiz ID",preview_quiz:"Preview Quiz",quiz_cached:"Using saved quiz (AI unavailable).",
   },
   ur:{
     brand_name:"اے جے کے پی ایس سی",brand_sub:"امتحان پلیٹ فارم",
@@ -846,7 +981,7 @@ const T = {
     user_status:"حیثیت",user_actions:"عمل",
     no_users:"ابھی کوئی صارف نہیں۔",no_results:"ابھی کوئی نتائج نہیں۔",
     status_active:"فعال",status_expired:"ختم",status_soon:"جلد ختم",
-    time:"وقت",
+    time:"وقت",quiz_id:"کوئز آئی ڈی",preview_quiz:"کوئز معائنہ",quiz_cached:"AI دستیاب نہیں، محفوظ کوئز استعمال ہوا۔",
   }
 };
 
@@ -858,20 +993,60 @@ let authToken  = sessionStorage.getItem('psc_token') || null;
 let currentUser= null;
 try { currentUser = JSON.parse(sessionStorage.getItem('psc_user')); } catch {}
 let profession = null;
-let quiz       = null;
-let answers    = {};
-let qIdx       = 0;
-let qCount     = 30;
-let startTime  = null;
+  let quiz       = null;
+  let answers    = {};
+  let qIdx       = 0;
+  let qCount     = 30;
+  let currentQuizId = null;
+  let currentQuizSource = null;
+  let startTime  = null;
 let timerID    = null;
 let adminTab   = 'dashboard';
+
+/* ═══════════════════════════════════════════════════════════════════════
+   EXTEND TRANSLATIONS
+═══════════════════════════════════════════════════════════════════════ */
+Object.assign(T.en, {
+  admin_quizzes:'Quiz Library',
+  nav_quizzes:'Quiz Library', nav_topics:'My Topics', nav_dashboard:'Dashboard',
+  landing_signin:'Sign In', landing_register:'Register Interest',
+  landing_hero:'AI-Powered Exam<br>Preparation Platform',
+  landing_sub:'Prepare for AJK PSC exams with intelligent, topic-specific practice quizzes generated by advanced AI.',
+  landing_contact_title:'Register & Contact',
+  landing_contact_whatsapp:'WhatsApp / Call',
+  landing_contact_note:'Contact us to register your account or inquire about topics.',
+  quiz_lib_title:'Quiz Library', quiz_lib_sub:'Browse all practice quizzes available on the platform.',
+  quiz_attempt_title:'Quiz Attempt', share_result:'Share Result',
+  copy_link:'Copy Link', link_copied:'Link copied!',
+  result_shareable:'Shareable result link',
+  user_dashboard:'Dashboard', my_topics:'My Topics',
+  recent_activity:'Recent Activity', no_activity:'No activity yet. Start a quiz to see results here.',
+  quiz_source_ai:'AI Generated', quiz_source_cache:'Cached Quiz',
+});
+Object.assign(T.ur, {
+  admin_quizzes:'کوئز لائبریری',
+  nav_quizzes:'کوئز لائبریری', nav_topics:'میرے موضوعات', nav_dashboard:'ڈیش بورڈ',
+  landing_signin:'سائن ان', landing_register:'رجسٹریشن',
+  landing_hero:'AI سے چلنے والا<br>امتحان تیاری پلیٹ فارم',
+  landing_sub:'AJK PSC امتحانات کی تیاری کریں ذہین اور موضوع کے مطابق پریکٹس کوئزز کے ساتھ۔',
+  landing_contact_title:'رجسٹریشن اور رابطہ',
+  landing_contact_whatsapp:'واٹس ایپ / کال',
+  landing_contact_note:'اکاؤنٹ رجسٹر کرنے یا موضوعات کے بارے میں پوچھنے کے لیے ہم سے رابطہ کریں۔',
+  quiz_lib_title:'کوئز لائبریری', quiz_lib_sub:'پلیٹ فارم پر دستیاب تمام پریکٹس کوئزز دیکھیں۔',
+  quiz_attempt_title:'کوئز', share_result:'نتیجہ شیئر کریں',
+  copy_link:'لنک کاپی کریں', link_copied:'لنک کاپی ہو گیا!',
+  result_shareable:'شیئر کے قابل نتیجہ لنک',
+  user_dashboard:'ڈیش بورڈ', my_topics:'میرے موضوعات',
+  recent_activity:'حالیہ سرگرمی', no_activity:'ابھی کوئی سرگرمی نہیں۔ نتائج دیکھنے کے لیے کوئز شروع کریں۔',
+  quiz_source_ai:'AI سے تیار', quiz_source_cache:'محفوظ کوئز',
+});
 
 /* ═══════════════════════════════════════════════════════════════════════
    HELPERS
 ═══════════════════════════════════════════════════════════════════════ */
 const $   = id => document.getElementById(id);
 const t   = (k, v={}) => { let s=T[lang]?.[k]||T.en[k]||k; Object.entries(v).forEach(([a,b])=>{s=s.replace(`{${a}}`,b);}); return s; };
-const setP= pct => { $('progress-fill').style.width=pct+'%'; };
+const setP= pct => { const el=$('progress-fill'); if(el) el.style.width=pct+'%'; };
 const setV= html => { $('main-content').innerHTML=html; };
 const showBar=()=>$('submit-bar').classList.add('visible');
 const hideBar=()=>$('submit-bar').classList.remove('visible');
@@ -884,7 +1059,6 @@ function toast(msg, type='info', ms=3500){
   c.appendChild(el);
   setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300);},ms);
 }
-
 function modal(title, body, footer){
   $('modal-title').innerHTML=title;
   $('modal-body').innerHTML=body;
@@ -894,23 +1068,128 @@ function modal(title, body, footer){
 function closeModal(){ $('modal-overlay').classList.remove('open'); }
 
 /* ── API wrapper ── */
-async function api(method, path, body, noAuth=false){
-  const headers={'Content-Type':'application/json'};
-  if (!noAuth && authToken) headers['Authorization']=`Bearer ${authToken}`;
-  const opts={method,headers};
-  if (body) opts.body=JSON.stringify(body);
-  const controller=new AbortController();
-  const timeout=setTimeout(()=>controller.abort(),30000);
-  try {
-    const r=await fetch(path,{...opts,signal:controller.signal});
-    clearTimeout(timeout);
-    const data=await r.json().catch(()=>({}));
-    return {ok:r.ok, status:r.status, data};
-  } catch(e){
-    clearTimeout(timeout);
-    if (e.name==='AbortError') throw new Error('Request timed out. Check your connection.');
-    throw new Error('Network error. Check your connection.');
+  async function api(method, path, body, noAuth=false){
+    const headers={'Content-Type':'application/json'};
+    if (!noAuth && authToken) headers['Authorization']=`Bearer ${authToken}`;
+    const opts={method,headers};
+    if (body) opts.body=JSON.stringify(body);
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),30000);
+    try {
+      const r=await fetch(path,{...opts,signal:controller.signal});
+      clearTimeout(timeout);
+      const data=await r.json().catch(()=>({}));
+      return {ok:r.ok, status:r.status, data};
+    } catch(e){
+      clearTimeout(timeout);
+      if (e.name==='AbortError') throw new Error('Request timed out. Check your connection.');
+      throw new Error('Network error. Check your connection.');
+    }
   }
+
+  function setupMarkdown(){
+    if (window.marked) marked.setOptions({breaks:true, gfm:true});
+  }
+  function escapeHTML(str){
+    return String(str||'').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
+  function sanitizeHTML(html, inline=false){
+    if (!window.DOMPurify) return html;
+    const allowedInline=['em','strong','code','br','sub','sup','span','del','u'];
+    const allowedBlock=['p','ul','ol','li','blockquote','code','pre','em','strong','br','sub','sup','span','del','u'];
+    return DOMPurify.sanitize(html, {ALLOWED_TAGS: inline?allowedInline:allowedBlock, ALLOWED_ATTR: []});
+  }
+  function mdInline(text){
+    if (window.marked) return sanitizeHTML(marked.parseInline(String(text||'')), true);
+    return escapeHTML(text).replace(/\n/g,'<br>');
+  }
+  function mdBlock(text){
+    if (window.marked) return sanitizeHTML(marked.parse(String(text||'')), false);
+    return escapeHTML(text).replace(/\n/g,'<br>');
+  }
+  function applyMath(el){
+    if (!el || !window.renderMathInElement) return;
+    renderMathInElement(el, {
+      delimiters: [
+        {left:'$$', right:'$$', display:true},
+        {left:'\\[', right:'\\]', display:true},
+        {left:'$', right:'$', display:false},
+        {left:'\\(', right:'\\)', display:false},
+      ],
+      throwOnError:false
+    });
+  }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   HISTORY API ROUTER
+═══════════════════════════════════════════════════════════════════════ */
+
+/** navigate(event, path) — use in onclick handlers for <a> tags */
+function navigate(e, path) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  if (path === location.pathname + location.search) return;
+  history.pushState(null, '', path);
+  route();
+}
+
+/** go(path) — programmatic navigation */
+function go(path) {
+  history.pushState(null, '', path);
+  route();
+}
+
+window.addEventListener('popstate', () => route());
+
+function route() {
+  const p = location.pathname;
+  const q = new URLSearchParams(location.search);
+
+  // Hide quiz bar by default; pages that need it show it themselves
+  hideBar();
+  setP(10);
+
+  // Topbar visibility — hide on admin pages (admin has own sidebar)
+  const isAdmin = p.startsWith('/admin');
+  $('main-topbar').style.display = (isAdmin && p !== '/admin/account') ? 'none' : '';
+
+  // Dispatch
+  if (p === '/')                         return renderLanding();
+  if (p === '/user/account')             return renderLogin('user');
+  if (p === '/admin/account')            return renderLogin('admin');
+  if (p === '/user/dashboard')           return requireAuth(() => renderUserDashboard());
+  if (p === '/user/topics')              return requireAuth(() => renderTopics());
+  if (p === '/quizzes/create')           return requireAuth(() => renderConfigure());
+  if (p === '/quizzes')                  return requireAuth(() => renderQuizLibrary());
+  if (p === '/admin/dashboard')          return requireAdmin(() => renderAdmin('dashboard'));
+  if (p === '/admin/users')              return requireAdmin(() => renderAdmin('users'));
+  if (p === '/admin/results')            return requireAdmin(() => renderAdmin('results'));
+  if (p === '/admin/quizzes')            return requireAdmin(() => renderAdmin('quizzes'));
+
+  // /quizzes/:id/results
+  const rm = p.match(/^\/quizzes\/([^/]+)\/results$/);
+  if (rm) return requireAuth(() => renderResultPage(rm[1], q.get('uid')));
+
+  // /quizzes/:id
+  const qm = p.match(/^\/quizzes\/([^/]+)$/);
+  if (qm) return renderQuizAttemptOrPreview(qm[1], q);
+
+  // 404
+  setV(`<div class="page"><div class="state-box">
+    <div class="state-icon warn"><i class="fa-solid fa-map-pin"></i></div>
+    <div class="state-title">Page Not Found</div>
+    <div class="state-desc">The page <code>${p}</code> doesn't exist.</div>
+    <button class="btn btn-accent" onclick="go('/')">Go Home</button>
+  </div></div>`);
+}
+
+function requireAuth(fn) {
+  if (!authToken || !currentUser) { go('/user/account'); return; }
+  fn();
+}
+function requireAdmin(fn) {
+  if (!authToken || !currentUser) { go('/admin/account'); return; }
+  if (currentUser.role !== 'admin' && currentUser.uid !== 'admin') { go('/'); return; }
+  fn();
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -926,46 +1205,42 @@ if (window.matchMedia('(prefers-color-scheme:dark)').matches)
 
 function toggleLang(){
   lang=lang==='en'?'ur':'en';
-  const h=document.documentElement;
-  h.setAttribute('data-lang',lang);
-  h.setAttribute('dir',lang==='ur'?'rtl':'ltr');
-  h.setAttribute('lang',lang);
-  $('lang-label').textContent=lang==='en'?'اردو':'English';
-  $('brand-name-text').textContent=t('brand_name');
-  $('brand-sub-text').textContent=t('brand_sub');
-  if ($('sb-submit-label')) $('sb-submit-label').textContent=t('submit_quiz');
-  if (!currentUser) renderLogin();
-  else if (currentUser.role==='admin') renderAdmin(adminTab);
-  else if (quiz) renderQuiz(qIdx);
-  else renderTopics();
+  document.documentElement.setAttribute('data-lang',lang);
+  document.documentElement.setAttribute('dir',lang==='ur'?'rtl':'ltr');
+  $('lang-label').textContent=lang==='en'?'اردو':'EN';
+  renderChip();
+  route();
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   USER CHIP
+   USER CHIP & DROPDOWN
 ═══════════════════════════════════════════════════════════════════════ */
 function renderChip(){
   const c=$('user-chip-container');
-  if (!currentUser){c.innerHTML='';return;}
-  const ini=currentUser.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  if (!currentUser){ c.innerHTML=''; return; }
+  const init=(currentUser.name||'?')[0].toUpperCase();
+  const isAdmin = currentUser.role==='admin'||currentUser.uid==='admin';
   c.innerHTML=`
-    <div class="dropdown" id="udrop">
-      <div class="user-chip" onclick="document.getElementById('umenu').classList.toggle('open')">
-        <div class="user-avatar">${ini}</div>
+    <div class="dropdown" id="user-dd">
+      <div class="user-chip" onclick="toggleUMenu()">
+        <div class="user-avatar">${init}</div>
         <span class="user-chip-name">${currentUser.name}</span>
-        <i class="fa-solid fa-chevron-down" style="font-size:10px;color:var(--fg-subtle)"></i>
+        <i class="fa-solid fa-chevron-down" style="font-size:10px;color:var(--fg-subtle);margin-inline-start:2px"></i>
       </div>
-      <div class="dropdown-menu" id="umenu">
-        <div class="dropdown-item" style="font-size:12px;color:var(--fg-subtle);cursor:default">
-          <i class="fa-solid fa-envelope" style="font-size:11px"></i>${currentUser.email}
-        </div>
+      <div class="dropdown-menu" id="user-menu">
+        ${!isAdmin?`<div class="dropdown-item" onclick="closeUMenu();go('/user/dashboard')"><i class="fa-solid fa-gauge"></i>${t('user_dashboard')}</div>`:''}
+        ${!isAdmin?`<div class="dropdown-item" onclick="closeUMenu();go('/user/topics')"><i class="fa-solid fa-list-check"></i>${t('my_topics')}</div>`:''}
+        ${isAdmin?`<div class="dropdown-item" onclick="closeUMenu();go('/admin/dashboard')"><i class="fa-solid fa-shield-halved"></i>${t('admin_dash')}</div>`:''}
         <div class="dropdown-divider"></div>
-        ${currentUser.role==='admin'?`<div class="dropdown-item" onclick="closeUMenu();renderAdmin()"><i class="fa-solid fa-shield-halved"></i>${t('admin_dash')}</div>`:''}
         <div class="dropdown-item danger" onclick="doLogout()"><i class="fa-solid fa-arrow-right-from-bracket"></i>${t('logout')}</div>
       </div>
     </div>`;
+  document.addEventListener('click', function outer(e){
+    if (!$('user-dd')?.contains(e.target)) { closeUMenu(); document.removeEventListener('click',outer); }
+  });
 }
-function closeUMenu(){ $('umenu')?.classList.remove('open'); }
-document.addEventListener('click',e=>{ if(!e.target.closest('#udrop')) closeUMenu(); });
+function toggleUMenu(){ $('user-menu')?.classList.toggle('open'); }
+function closeUMenu(){ $('user-menu')?.classList.remove('open'); }
 
 function doLogout(){
   authToken=null; currentUser=null; quiz=null; answers={};
@@ -973,20 +1248,117 @@ function doLogout(){
   if(timerID) clearInterval(timerID);
   sessionStorage.removeItem('psc_token');
   sessionStorage.removeItem('psc_user');
-  history.replaceState(null,'','/');
-  $('user-chip-container').innerHTML='';
+  renderChip();
   hideBar(); setP(0);
-  $('main-content').style.padding='';
-  renderLogin();
+  go('/');
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   LOGIN
+   LANDING PAGE  /
 ═══════════════════════════════════════════════════════════════════════ */
-let _loginOpts={};
-function renderLogin(opts={}){
-  _loginOpts=opts; hideBar(); setP(0);
-  $('main-content').style.padding='0';
+function renderLanding(){
+  setP(100);
+  $('main-topbar').style.display = 'none'; // landing has its own nav
+  setV(`
+  <div class="landing-hero">
+    <nav class="landing-nav">
+      <div class="landing-nav-inner">
+        <a class="brand" href="/" onclick="navigate(event,'/')">
+          <div class="brand-mark"><i class="fa-solid fa-graduation-cap"></i></div>
+          <div class="brand-text">
+            <span class="brand-name">AJK PSC Prep</span>
+            <span class="brand-sub">Exam Platform</span>
+          </div>
+        </a>
+        <div class="landing-nav-links">
+          <button class="nav-link" onclick="go('/quizzes')"><i class="fa-solid fa-book-open"></i> ${t('quiz_lib_title')}</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="lang-btn" onclick="toggleLang()">
+            <i class="fa-solid fa-language"></i><span>${lang==='en'?'اردو':'EN'}</span>
+          </button>
+          <button class="icon-btn" onclick="toggleTheme()"><i class="fa-solid fa-circle-half-stroke"></i></button>
+          ${currentUser
+            ? `<button class="btn btn-accent btn-sm" onclick="go('${currentUser.role==='admin'?'/admin/dashboard':'/user/dashboard'}')">
+                <i class="fa-solid fa-gauge"></i> ${currentUser.role==='admin'?t('admin_dash'):t('user_dashboard')}
+               </button>`
+            : `<button class="btn btn-ghost btn-sm" onclick="go('/user/account')">${t('landing_signin')}</button>
+               <button class="btn btn-accent btn-sm" onclick="go('/admin/account')"><i class="fa-solid fa-shield-halved"></i> Admin</button>`
+          }
+        </div>
+      </div>
+    </nav>
+
+    <div class="landing-main">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:8px;background:var(--accent-subtle);color:var(--accent);border:1px solid var(--accent-border);padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;font-family:var(--font-mono);margin-bottom:20px">
+          <i class="fa-solid fa-shield-halved"></i> AJK PUBLIC SERVICE COMMISSION
+        </div>
+        <h1 class="landing-headline">${t('landing_hero')}</h1>
+        <p class="landing-sub">${t('landing_sub')}</p>
+        <div class="landing-actions">
+          ${currentUser
+            ? `<button class="btn btn-accent btn-lg" onclick="go('${currentUser.role==='admin'?'/admin/dashboard':'/user/topics'}')">
+                <i class="fa-solid fa-arrow-right"></i> Go to Dashboard
+               </button>`
+            : `<button class="btn btn-accent btn-lg" onclick="go('/user/account')">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> ${t('landing_signin')}
+               </button>`
+          }
+          <button class="btn btn-ghost btn-lg" onclick="go('/quizzes')">
+            <i class="fa-solid fa-book-open"></i> Browse Quizzes
+          </button>
+        </div>
+        <div class="landing-features">
+          <div class="landing-feat"><div class="landing-feat-icon"><i class="fa-solid fa-brain"></i></div>AI-generated practice questions</div>
+          <div class="landing-feat"><div class="landing-feat-icon"><i class="fa-solid fa-language"></i></div>English &amp; Urdu bilingual support</div>
+          <div class="landing-feat"><div class="landing-feat-icon"><i class="fa-solid fa-chart-line"></i></div>Detailed performance analytics</div>
+          <div class="landing-feat"><div class="landing-feat-icon"><i class="fa-solid fa-link"></i></div>Shareable quiz &amp; result links</div>
+        </div>
+      </div>
+      <div>
+        <div class="landing-card">
+          <div class="landing-card-title"><i class="fa-solid fa-address-card" style="color:var(--accent);margin-inline-end:8px"></i>${t('landing_contact_title')}</div>
+          <div class="landing-contact-line">
+            <div class="landing-contact-icon"><i class="fa-brands fa-whatsapp"></i></div>
+            <div>
+              <div style="font-weight:600;font-size:13px">${t('landing_contact_whatsapp')}</div>
+              <a href="https://wa.me/923428910567" target="_blank" style="font-size:13px;color:var(--accent);text-decoration:none">+92 342 891 0567</a>
+            </div>
+          </div>
+          <div class="landing-contact-line">
+            <div class="landing-contact-icon"><i class="fa-solid fa-circle-info"></i></div>
+            <div style="font-size:13px;color:var(--fg-muted)">${t('landing_contact_note')}</div>
+          </div>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-accent btn-full" onclick="go('/user/account')">
+              <i class="fa-solid fa-arrow-right-to-bracket"></i> ${t('landing_signin')}
+            </button>
+            <a href="https://wa.me/923428910567?text=Hello%2C%20I%20want%20to%20register%20for%20AJK%20PSC%20Exam%20Prep"
+               target="_blank" class="btn btn-ghost btn-full" style="text-align:center;text-decoration:none">
+              <i class="fa-brands fa-whatsapp"></i> ${t('landing_register')}
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="landing-footer">
+      <span>AJK PSC Exam Preparation Platform · Authorized access only</span>
+      <span style="display:flex;gap:16px">
+        <button class="nav-link" onclick="go('/quizzes')">Quiz Library</button>
+        <a href="https://wa.me/923428910567" target="_blank" class="nav-link">Contact</a>
+      </span>
+    </div>
+  </div>`);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LOGIN PAGE  /user/account  /admin/account
+═══════════════════════════════════════════════════════════════════════ */
+function renderLogin(mode='user'){
+  setP(0); hideBar();
+  const isAdmin = mode==='admin';
   setV(`
     <div class="login-wrap">
       <div class="login-hero">
@@ -994,21 +1366,21 @@ function renderLogin(opts={}){
         <div class="hero-content">
           <div class="hero-badge"><i class="fa-solid fa-shield-halved"></i> AJK PUBLIC SERVICE COMMISSION</div>
           <h1 class="hero-title">AI-Powered Exam<br>Preparation Platform</h1>
-          <p class="hero-desc">Prepare for AJK PSC exams with intelligent, topic-specific practice quizzes generated by advanced AI.</p>
+          <p class="hero-desc">Prepare for AJK PSC exams with intelligent, topic-specific practice quizzes.</p>
           <div class="hero-features">
-            <div class="hero-feature"><div class="hero-feature-icon"><i class="fa-solid fa-brain"></i></div>AI-generated practice questions</div>
-            <div class="hero-feature"><div class="hero-feature-icon"><i class="fa-solid fa-language"></i></div>English & Urdu bilingual support</div>
-            <div class="hero-feature"><div class="hero-feature-icon"><i class="fa-solid fa-chart-line"></i></div>Detailed performance analytics</div>
-            <div class="hero-feature"><div class="hero-feature-icon"><i class="fa-solid fa-database"></i></div>No Google — 100% Cloudflare</div>
+            <div class="hero-feature"><div class="hero-feature-icon"><i class="fa-solid fa-brain"></i></div>AI-generated questions</div>
+            <div class="hero-feature"><div class="hero-feature-icon"><i class="fa-solid fa-language"></i></div>Bilingual support</div>
+            <div class="hero-feature"><div class="hero-feature-icon"><i class="fa-solid fa-chart-line"></i></div>Performance analytics</div>
+            <div class="hero-feature"><div class="hero-feature-icon"><i class="fa-solid fa-link"></i></div>Shareable results</div>
           </div>
         </div>
       </div>
       <div style="display:flex;align-items:center;justify-content:center;padding:40px 24px;min-height:100dvh">
         <div class="login-box">
           <div class="login-header">
-            <div class="login-logo"><i class="fa-solid fa-graduation-cap"></i></div>
-            <h1 class="login-title">${t('login_title')}</h1>
-            <p class="login-sub">${t('login_sub')}</p>
+            <div class="login-logo"><i class="fa-solid fa-${isAdmin?'shield-halved':'graduation-cap'}"></i></div>
+            <h1 class="login-title">${isAdmin?'Admin Access':t('login_title')}</h1>
+            <p class="login-sub">${isAdmin?'Sign in to the admin panel':t('login_sub')}</p>
           </div>
           <div class="card" style="padding:28px;display:flex;flex-direction:column;gap:18px">
             <div class="field">
@@ -1026,22 +1398,28 @@ function renderLogin(opts={}){
               </div>
               <div class="field-error" id="login-err"></div>
             </div>
-            <button class="btn btn-accent btn-full btn-lg" id="login-btn" onclick="submitLogin()">
+            <button class="btn btn-accent btn-full btn-lg" id="login-btn" onclick="submitLogin('${mode}')">
               <i class="fa-solid fa-arrow-right-to-bracket"></i> ${t('login_btn')}
             </button>
           </div>
           <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--fg-subtle)">
-            AJK PSC Exam Preparation · Authorized access only
+            ${isAdmin
+              ? `<button class="nav-link" onclick="go('/user/account')">← User login</button>`
+              : `<button class="nav-link" onclick="go('/')">← Back to home</button>
+                 &nbsp;·&nbsp;
+                 <button class="nav-link" onclick="go('/admin/account')">Admin?</button>`
+            }
           </div>
         </div>
       </div>
     </div>`);
   ['l-email','l-pass'].forEach((id,i,arr)=>{
-    $(id)?.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault(); i<arr.length-1?$(arr[i+1]).focus():submitLogin();} });
+    $(id)?.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault(); i<arr.length-1?$(arr[i+1]).focus():submitLogin(mode);} });
   });
+  setTimeout(()=>$('l-email')?.focus(),100);
 }
 
-async function submitLogin(){
+async function submitLogin(mode='user'){
   const email=$('l-email')?.value.trim();
   const pass=$('l-pass')?.value;
   const errEl=$('login-err'), btn=$('login-btn');
@@ -1059,10 +1437,9 @@ async function submitLogin(){
     authToken=data.token; currentUser=data.user;
     sessionStorage.setItem('psc_token',authToken);
     sessionStorage.setItem('psc_user',JSON.stringify(currentUser));
-    $("main-content").style.padding='';
     renderChip();
-    if(currentUser.role==='admin') renderAdmin(_loginOpts.adminRedirect||'dashboard');
-    else renderTopics();
+    if(currentUser.role==='admin'||currentUser.uid==='admin') go('/admin/dashboard');
+    else go('/user/dashboard');
   } catch(e){
     errEl.textContent=e.message; errEl.classList.add('visible');
     btn.disabled=false; btn.innerHTML=`<i class="fa-solid fa-arrow-right-to-bracket"></i> ${t('login_btn')}`;
@@ -1070,10 +1447,66 @@ async function submitLogin(){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   TOPICS
+   USER DASHBOARD  /user/dashboard
+═══════════════════════════════════════════════════════════════════════ */
+async function renderUserDashboard(){
+  setP(30);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const expiry = currentUser.expiryDate ? new Date(currentUser.expiryDate) : null;
+  if(expiry) expiry.setHours(0,0,0,0);
+  const daysLeft = expiry ? Math.ceil((expiry-today)/(86400000)) : null;
+  setV(`<div class="page" style="animation:fadeUp .25s ease both">
+    <div class="page-header">
+      <div class="page-title">${t('user_dashboard')}</div>
+      <p class="page-desc">Welcome back, ${currentUser.name}</p>
+    </div>
+    <div class="dashboard-grid">
+      <div class="dashboard-card">
+        <div class="dashboard-card-title"><i class="fa-solid fa-user" style="color:var(--accent)"></i>${t('candidate')}</div>
+        <div class="panel-list-item"><span class="panel-list-label">${t('name')}</span><span class="panel-list-value">${currentUser.name}</span></div>
+        <div class="panel-list-item"><span class="panel-list-label">${t('email')}</span><span class="panel-list-value" style="font-size:12px">${currentUser.email}</span></div>
+        ${daysLeft!==null?`<div class="panel-list-item"><span class="panel-list-label">Access Expires</span><span class="panel-list-value ${daysLeft<=7?'text-error':''}">${daysLeft>0?daysLeft+' days remaining':'Expired'}</span></div>`:''}
+        <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-accent btn-full" onclick="go('/user/topics')">
+            <i class="fa-solid fa-play"></i> Start a Quiz
+          </button>
+          <button class="btn btn-ghost btn-full" onclick="go('/quizzes')">
+            <i class="fa-solid fa-book-open"></i> Quiz Library
+          </button>
+        </div>
+      </div>
+      <div class="dashboard-card">
+        <div class="dashboard-card-title"><i class="fa-solid fa-list-check" style="color:var(--accent)"></i>${t('my_topics')}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px" id="dash-topics">
+          ${(currentUser.topics||[]).map(id=>{
+            const p=PROF_MAP[id];
+            const nm=p?(lang==='ur'?p.label_ur:p.label_en):id;
+            return `<span class="tag" onclick="selectTopic('${id}')" style="cursor:pointer"><i class="${p?.icon||'fa-solid fa-book'}" style="font-size:10px"></i>${nm}</span>`;
+          }).join('')||`<span style="color:var(--fg-muted);font-size:13px">No topics assigned. Contact admin.</span>`}
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:28px">
+      <div class="section-head">
+        <span class="section-head-title">${t('recent_activity')}</span>
+        <div class="section-head-line"></div>
+      </div>
+      <div id="dash-activity"><div class="spinner" style="width:20px;height:20px"></div></div>
+    </div>
+  </div>`);
+  setP(100);
+  // Load recent user results
+  try {
+    // We don't have a user-specific results endpoint, so we'll just show a prompt
+    $('dash-activity').innerHTML=`<div style="color:var(--fg-muted);font-size:13px;padding:16px 0">${t('no_activity')}</div>`;
+  } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TOPICS  /user/topics
 ═══════════════════════════════════════════════════════════════════════ */
 function renderTopics(){
-  hideBar(); setP(20); $('main-content').style.padding='';
+  hideBar(); setP(20);
   const allowed=new Set(currentUser.topics||[]);
   const cards=PROFESSIONS.map(p=>{
     const ok_=allowed.has(p.id);
@@ -1083,85 +1516,74 @@ function renderTopics(){
         <div class="topic-card-icon"><i class="${p.icon}"></i></div>
         <div><div class="topic-card-name">${nm}</div><div class="topic-card-id">${p.id}</div></div>
         <div class="topic-card-arrow" style="margin-inline-start:auto">
-          ${ok_?'<i class="fa-solid fa-arrow-right"></i>':' <i class="fa-solid fa-lock"></i>'}
+          ${ok_?'<i class="fa-solid fa-arrow-right"></i>':'<i class="fa-solid fa-lock"></i>'}
         </div>
       </div>
     </div>`;
   }).join('');
   setV(`<div class="page" style="animation:fadeUp .25s ease both">
     <div class="page-header">
+      <div class="page-breadcrumb">
+        <span data-nav onclick="go('/user/dashboard')">${t('user_dashboard')}</span>
+        <span class="sep">/</span><span class="current">${t('choose_topic')}</span>
+      </div>
       <div class="page-title">${t('choose_topic')}</div>
       <p class="page-desc">${t('choose_desc')}</p>
     </div>
     <div class="topic-grid">${cards}</div>
   </div>`);
+  setP(100);
 }
 
 function selectTopic(id){
   profession=PROF_MAP[id];
-  renderConfigure();
+  go('/quizzes/create');
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   CONFIGURE
+   CONFIGURE  /quizzes/create
 ═══════════════════════════════════════════════════════════════════════ */
 function renderConfigure(){
+  if (!profession) { go('/user/topics'); return; }
   hideBar(); setP(40);
   const nm=lang==='ur'?profession.label_ur:profession.label_en;
   qCount=30;
   setV(`<div class="page page-md" style="animation:fadeUp .25s ease both">
     <div class="page-header">
-      <div class="page-header-meta">
-        <div class="breadcrumb">
-          <span style="cursor:pointer" onclick="renderTopics()">${t('choose_topic')}</span>
-          <span class="sep">/</span><span>${nm}</span>
-        </div>
+      <div class="page-breadcrumb">
+        <span data-nav onclick="go('/user/topics')">${t('choose_topic')}</span>
+        <span class="sep">/</span><span class="current">${nm}</span>
       </div>
       <div class="page-title">${t('configure')}</div>
       <p class="page-desc">${t('configure_desc')}</p>
     </div>
-    <div class="card">
-      <div class="card-header">
-        <div class="topic-card-icon"><i class="${profession.icon}"></i></div>
-        <span class="card-title">${nm}</span>
-        <span class="badge badge-accent" style="margin-inline-start:auto">${profession.id}</span>
-      </div>
-      <div class="card-body" style="display:flex;flex-direction:column;gap:20px">
-        <div class="field">
-          <label class="field-label">${t('count_label')}</label>
-          <div class="count-selector">
-            <button class="count-opt"  data-c="5"  onclick="pickCount(5)">5</button>
-            <button class="count-opt"  data-c="10" onclick="pickCount(10)">10</button>
-            <button class="count-opt active" data-c="30" onclick="pickCount(30)">30</button>
-            <button class="count-opt"  data-c="50" onclick="pickCount(50)">50</button>
-          </div>
+    <div class="card" style="padding:28px">
+      <div class="field">
+        <label class="field-label">${t('count_label')}</label>
+        <div class="count-selector" id="count-sel">
+          ${[5,10,15,30,50].map(n=>`<button class="count-opt ${n===30?'active':''}" onclick="setCount(${n},this)">${n}</button>`).join('')}
         </div>
-        <div class="callout info">
-          <i class="fa-solid fa-circle-info" style="margin-top:2px"></i>
-          <div>${t('count_info')}</div>
-        </div>
+        <div class="field-hint" style="margin-top:8px">${t('count_info')}</div>
       </div>
-      <div class="card-footer">
-        <button class="btn btn-ghost" onclick="renderTopics()">
-          <i class="fa-solid fa-arrow-left"></i> ${t('back')}
-        </button>
-        <button class="btn btn-accent btn-lg" onclick="doGenerate()">
-          <i class="fa-solid fa-wand-magic-sparkles"></i> ${t('generate')}
-        </button>
-      </div>
+      <button class="btn btn-accent btn-full btn-lg" style="margin-top:24px" onclick="doGenerate()">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> ${t('generate')}
+      </button>
     </div>
   </div>`);
+  setP(100);
 }
 
-function pickCount(n){
+function setCount(n, btn){
   qCount=n;
-  document.querySelectorAll('.count-opt').forEach(b=>b.classList.toggle('active',+b.dataset.c===n));
+  document.querySelectorAll('.count-opt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
    GENERATE
 ═══════════════════════════════════════════════════════════════════════ */
 async function doGenerate(){
+  if (!profession) { go('/user/topics'); return; }
   setP(60);
   const nm=lang==='ur'?profession.label_ur:profession.label_en;
   const concepts=profession.concepts.join(', ');
@@ -1191,9 +1613,16 @@ async function doGenerate(){
     const data=await res.json();
     if (!data.questions?.length) throw new Error('No questions returned by AI.');
     quiz=data.questions; answers={}; qIdx=0;
+    currentQuizId=data.quizId||null;
+    currentQuizSource=data.source||'ai';
+    if (currentQuizSource==='cache') toast(t('quiz_cached'),'warn');
     startTime=Date.now();
     if(timerID) clearInterval(timerID);
     timerID=setInterval(updateBar,1000);
+    // Navigate to quiz URL (shareable)
+    if (currentQuizId) {
+      history.replaceState(null,'',`/quizzes/${currentQuizId}`);
+    }
     setP(70); renderQuiz(0);
   } catch(e){
     const isAbort=e.name==='AbortError';
@@ -1203,39 +1632,150 @@ async function doGenerate(){
       <div class="state-desc">${isAbort?'AI took too long. Try fewer questions.':e.message}</div>
       <div style="display:flex;gap:10px;margin-top:8px">
         <button class="btn btn-accent" onclick="doGenerate()"><i class="fa-solid fa-rotate-right"></i> Try Again</button>
-        <button class="btn btn-ghost" onclick="renderConfigure()"><i class="fa-solid fa-arrow-left"></i> ${t('back')}</button>
+        <button class="btn btn-ghost" onclick="go('/quizzes/create')"><i class="fa-solid fa-arrow-left"></i> ${t('back')}</button>
       </div>
     </div></div>`);
   }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   QUIZ
+   QUIZ ATTEMPT  /quizzes/:id
 ═══════════════════════════════════════════════════════════════════════ */
-function renderQuiz(idx){
-  qIdx=idx;
-  const q=quiz[idx], total=quiz.length, answered=Object.keys(answers).length;
-  const isRTL=profession.lang==='ur';
-  updateBar(answered,total); showBar();
-  setP(70+(answered/total)*20);
-  const opts=q.options.map((o,i)=>{
-    const sel=answers[idx]===o;
-    return `<button class="option-btn ${sel?'selected':''}" data-answer="${encodeURIComponent(o)}" onclick="pickAnswer(${idx},this)">
-        <div class="option-letter">${'ABCD'[i]}</div>
-        <span style="${isRTL?'direction:rtl':''}">${o}</span>
-      </button>`;
-  }).join('');
+
+/** Called by router for /quizzes/:id */
+async function renderQuizAttemptOrPreview(quizId, params) {
+  // If quiz is already loaded in memory for this quizId, render it directly
+  if (quiz && currentQuizId === quizId) {
+    renderQuiz(qIdx);
+    return;
+  }
+  // Public preview mode (no auth) OR auth attempt
+  if (!authToken || !currentUser) {
+    renderQuizPublicPreview(quizId);
+    return;
+  }
+  // Authenticated — check topic access before loading
+  const isAdmin = currentUser?.role==='admin' || currentUser?.uid==='admin';
+  setP(30);
+  setV(`<div class="page"><div class="loader-wrap"><div class="spinner"></div><div class="loader-title">Loading quiz…</div></div></div>`);
+  try {
+    const {ok,data} = await api('GET',`/api/quizzes/${quizId}`);
+    if (!ok) {
+      const isAccessDenied = data.error?.includes('Forbidden') || data.error?.includes('plan');
+      setV(`<div class="page"><div class="state-box">
+        <div class="state-icon error"><i class="fa-solid fa-${isAccessDenied?'lock':'triangle-exclamation'}"></i></div>
+        <div class="state-title">${isAccessDenied?'Access Denied':'Quiz Not Found'}</div>
+        <div class="state-desc">${isAccessDenied?'This quiz belongs to a topic not included in your plan. Contact admin to get access.':data.error||'This quiz does not exist.'}</div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button class="btn btn-accent" onclick="go('/quizzes')">My Quiz Library</button>
+          ${isAccessDenied?`<a href="https://wa.me/923428910567" target="_blank" class="btn btn-ghost"><i class="fa-brands fa-whatsapp"></i> Contact Admin</a>`:''}
+        </div>
+      </div></div>`);
+      return;
+    }
+    quiz = data.questions;
+    answers = {};
+    qIdx = 0;
+    currentQuizId = quizId;
+    currentQuizSource = data._source || 'ai';
+    startTime = Date.now();
+    // Set profession from quiz data for result display
+    if (data.professionId && PROF_MAP[data.professionId]) {
+      profession = PROF_MAP[data.professionId];
+    } else if (!profession) {
+      // synthetic profession object
+      profession = { id: data.professionId||'unknown', label_en: data.topic||'Quiz', label_ur: data.topic||'کوئز', lang:'en' };
+    }
+    if(timerID) clearInterval(timerID);
+    timerID = setInterval(updateBar,1000);
+    setP(70);
+    renderQuiz(0);
+  } catch(e) {
+    toast(e.message,'error');
+    go('/quizzes');
+  }
+}
+
+/** Public preview — no correct answers shown */
+async function renderQuizPublicPreview(quizId) {
+  setP(20);
+  setV(`<div class="page"><div class="loader-wrap"><div class="spinner"></div><div class="loader-title">Loading quiz…</div></div></div>`);
+  try {
+    const {ok,data} = await api('GET',`/api/quizzes/${quizId}?preview=1`,null,true);
+    if (!ok) { setV(`<div class="page"><div class="state-box"><div class="state-icon error"><i class="fa-solid fa-triangle-exclamation"></i></div><div class="state-title">Quiz Not Found</div><div class="state-desc">${data.error||'This quiz does not exist.'}</div><button class="btn btn-ghost" onclick="go('/quizzes')">Quiz Library</button></div></div>`); return; }
+      const items=(data.questions||[]).map((q,i)=>{
+        const qHtml = mdInline(q.question);
+        return `
+        <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:10px">
+          <div style="font-weight:600;font-size:14px;margin-bottom:12px" class="md">${i+1}. ${qHtml}</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            ${(q.options||[]).map((o,j)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-md);font-size:13px">
+              <div style="width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border-strong);display:grid;place-items:center;font-size:11px;font-weight:700;font-family:var(--font-mono);flex-shrink:0">${'ABCD'[j]}</div><span class="md">${mdInline(o)}</span>
+            </div>`).join('')}
+          </div>
+        </div>`;
+      }).join('');
+      setV(`<div class="page" style="animation:fadeUp .25s ease both">
+        <div class="page-header">
+        <div class="page-breadcrumb">
+          <span data-nav onclick="go('/quizzes')">Quiz Library</span>
+          <span class="sep">/</span><span class="current">Preview</span>
+        </div>
+        <div class="page-title">${data.topic||'Quiz'}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          ${data.professionId?`<span class="badge badge-default">${data.professionId}</span>`:''}
+          <span class="badge badge-default">${data.count} questions</span>
+          <span class="badge badge-default">${(data.lang||'').toUpperCase()}</span>
+        </div>
+      </div>
+      <div class="callout" style="background:var(--accent-subtle);border:1px solid var(--accent-border);border-radius:var(--radius-lg);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;font-size:13px">
+        <i class="fa-solid fa-lock" style="color:var(--accent)"></i>
+        <div><strong>Sign in to attempt this quiz</strong> — Correct answers are hidden in preview mode.
+          <button class="btn btn-accent btn-sm" onclick="go('/user/account')" style="margin-inline-start:10px">Sign In</button>
+        </div>
+      </div>
+        ${items}
+      </div>`);
+      applyMath($('main-content'));
+      setP(100);
+  } catch(e) { toast(e.message,'error'); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   QUIZ UI (shared between generate flow and direct URL)
+═══════════════════════════════════════════════════════════════════════ */
+  function renderQuiz(idx){
+    qIdx=idx;
+    const q=quiz[idx], total=quiz.length, answered=Object.keys(answers).length;
+    const isRTL=profession?.lang==='ur';
+    const qHtml = mdInline(q.question);
+    updateBar(answered,total); showBar();
+    setP(70+(answered/total)*20);
+    const opts=q.options.map((o,i)=>{
+      const sel=answers[idx]===o;
+      return `<button class="option-btn ${sel?'selected':''}" data-answer="${encodeURIComponent(o)}" onclick="pickAnswer(${idx},this)">
+          <div class="option-letter">${'ABCD'[i]}</div>
+          <span class="option-text md" style="${isRTL?'direction:rtl':''}">${mdInline(o)}</span>
+        </button>`;
+    }).join('');
   const dots=quiz.map((_,i)=>`<div class="q-dot ${i===idx?'current':answers[i]!==undefined?'answered':''}" onclick="renderQuiz(${i})">${i+1}</div>`).join('');
+  const topicLabel = profession?(lang==='ur'?profession.label_ur:profession.label_en):'Quiz';
   setV(`<div class="page page-md" style="animation:fadeUp .2s ease both">
+    <div class="page-breadcrumb" style="margin-bottom:12px">
+      <span data-nav onclick="go('/user/topics')">${t('choose_topic')}</span>
+      <span class="sep">/</span><span>${topicLabel}</span><span class="sep">/</span>
+      <span class="current">Question ${idx+1}</span>
+    </div>
     <div class="question-card">
       <div class="question-head">
         <span class="question-num">${t('q_of',{n:idx+1,total})}</span>
         <span class="badge badge-${answered===total?'success':'default'}">${answered}/${total} ${t('answered')}</span>
+        ${currentQuizSource==='cache'?`<span class="badge" style="background:var(--warning-subtle);color:var(--warning);font-size:10px">${t('quiz_source_cache')}</span>`:''}
       </div>
-      <div class="question-body">
-        <div class="question-text" style="${isRTL?'direction:rtl;text-align:right':''}">${q.question}</div>
-        <div class="options-list">${opts}</div>
-      </div>
+        <div class="question-body">
+          <div class="question-text md" style="${isRTL?'direction:rtl;text-align:right':''}">${qHtml}</div>
+          <div class="options-list">${opts}</div>
+        </div>
       <div class="question-nav">
         <button class="btn btn-ghost" onclick="renderQuiz(${idx-1})" ${idx===0?'disabled':''}>
           <i class="fa-solid fa-arrow-left"></i> ${t('back')}
@@ -1255,8 +1795,9 @@ function renderQuiz(idx){
       </div>
       <div class="q-grid">${dots}</div>
     </div>
-  </div>`);
-}
+    </div>`);
+    applyMath($('main-content'));
+  }
 
 function pickAnswer(idx, btn){
   const answer=decodeURIComponent(btn.dataset.answer||'');
@@ -1278,7 +1819,6 @@ function updateBar(){
     tel.textContent=`${String(Math.floor(e/60)).padStart(2,'0')}:${String(e%60).padStart(2,'0')}`;
   }
 }
-
 function openQNav(){
   const total=quiz.length, answered=Object.keys(answers).length;
   const grid=quiz.map((_,i)=>`<div class="q-dot ${i===qIdx?'current':answers[i]!==undefined?'answered':''}"
@@ -1287,7 +1827,6 @@ function openQNav(){
     <div class="q-grid" style="gap:8px">${grid}</div>`,
     `<button class="btn btn-ghost" onclick="closeModal()">${t('cancel')}</button>`);
 }
-
 function openSubmitModal(){
   const total=quiz.length, unanswered=total-Object.keys(answers).length;
   if(unanswered>0){
@@ -1299,13 +1838,14 @@ function openSubmitModal(){
        <button class="btn btn-accent" onclick="closeModal();submitQuiz()">${t('submit_anyway')}</button>`);
   } else { submitQuiz(); }
 }
-
-function submitQuiz(){ closeModal(); if(timerID)clearInterval(timerID); renderResults(); }
+function submitQuiz(){ closeModal(); if(timerID)clearInterval(timerID); saveAndRenderResults(); }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   RESULTS
+   RESULTS  /quizzes/:id/results
 ═══════════════════════════════════════════════════════════════════════ */
-async function renderResults(){
+
+/** Called after quiz submission — saves result and navigates to results URL */
+async function saveAndRenderResults(){
   hideBar(); setP(95);
   const total=quiz.length;
   let score=0;
@@ -1319,54 +1859,111 @@ async function renderResults(){
   const pct=(score/total)*100, pass=pct>=60;
   const wrong=items.filter(x=>!x.isCorrect&&!x.skipped).length;
   const skip=items.filter(x=>x.skipped).length;
-  const circ=2*Math.PI*54, offset=circ-(pct/100)*circ;
-  const nm=lang==='ur'?profession.label_ur:profession.label_en;
 
-  // Save result to API (non-blocking)
-  api('POST','/api/results',{
-    profession:profession.id,professionLabel:profession.label_en,
-    score,total,percentage:pct,pass,wrong,skipped:skip,timeTaken:timeStr,
-    answers:items.map(({question,correctAnswer,selectedAnswer,isCorrect,skipped})=>
-      ({question,correctAnswer,selectedAnswer,isCorrect,skipped}))
-  }).catch(e=>console.warn('Result save failed:',e.message));
+  // Save result — non-blocking, but we want the resultId for the URL
+  let savedResultId = null;
+  try {
+    const {ok,data} = await api('POST','/api/results',{
+      profession:profession?.id||'unknown', professionLabel:profession?.label_en||'Quiz',
+      score, total, percentage:pct, pass, wrong, skipped:skip, timeTaken:timeStr,
+      quizId:currentQuizId, quizSource:currentQuizSource,
+      answers:items.map(({question,correctAnswer,selectedAnswer,isCorrect,skipped})=>
+        ({question,correctAnswer,selectedAnswer,isCorrect,skipped}))
+    });
+    if (ok) savedResultId = data.resultId;
+  } catch(e){ console.warn('Result save failed:',e.message); }
 
+  // Store in memory for result page render
+  window._lastResult = { items, score, total, pct, pass, wrong, skip, timeStr, savedResultId };
+  window._lastQuizItems = items;
+
+  // Navigate to shareable results URL
+  const uid = currentUser?.uid;
+  if (currentQuizId) {
+    const resultsPath = `/quizzes/${currentQuizId}/results${uid?`?uid=${uid}`:''}`;
+    history.replaceState(null,'', resultsPath);
+  }
   setP(100);
+  renderResultsPage(items, score, total, pct, pass, wrong, skip, timeStr, savedResultId);
+}
 
-  const reviewHTML=items.map((item,i)=>{
-    const cls=item.isCorrect?'correct':item.skipped?'skipped':'incorrect';
-    const icon=item.isCorrect?'fa-check':item.skipped?'fa-minus':'fa-xmark';
-    let ans='';
-    if(item.skipped)
-      ans=`<div class="review-answer-row skipped-row"><span class="review-tag">SKIPPED</span></div>
-           <div class="review-answer-row correct-ans"><span class="review-tag">${t('correct_answer').toUpperCase()}</span><span>${item.correctAnswer}</span></div>`;
-    else if(item.isCorrect)
-      ans=`<div class="review-answer-row user-correct"><i class="fa-solid fa-check" style="font-size:10px"></i><span class="review-tag">${t('your_answer').toUpperCase()}</span><span>${item.selectedAnswer}</span></div>`;
-    else
-      ans=`<div class="review-answer-row user-wrong"><i class="fa-solid fa-xmark" style="font-size:10px"></i><span class="review-tag">${t('your_answer').toUpperCase()}</span><span>${item.selectedAnswer}</span></div>
-           <div class="review-answer-row correct-ans"><i class="fa-solid fa-check" style="font-size:10px"></i><span class="review-tag">${t('correct_answer').toUpperCase()}</span><span>${item.correctAnswer}</span></div>`;
-    return `<div class="review-card ${cls}" style="animation-delay:${i*.02}s">
-      <div class="review-card-head">
-        <div class="review-icon ${cls}"><i class="fa-solid ${icon}"></i></div>
-        <div class="review-q"><span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-subtle)">${i+1}. </span>${item.question}</div>
-      </div>
-      <div class="review-answers">${ans}</div>
-    </div>`;
-  }).join('');
+/** renderResultPage — called by router for /quizzes/:id/results (deeplink) */
+async function renderResultPage(quizId, uid) {
+  // If we have in-memory results for this quiz, render them directly
+  if (window._lastResult && currentQuizId === quizId) {
+    const {items,score,total,pct,pass,wrong,skip,timeStr,savedResultId} = window._lastResult;
+    renderResultsPage(items,score,total,pct,pass,wrong,skip,timeStr,savedResultId);
+    return;
+  }
+  // Otherwise, this is a deeplinked result — we can't reconstruct the full result
+  // without the saved result record. Show a "result not available" state.
+  setV(`<div class="page"><div class="state-box">
+    <div class="state-icon warn"><i class="fa-solid fa-clock-rotate-left"></i></div>
+    <div class="state-title">Result Not Available</div>
+    <div class="state-desc">Quiz results are only available immediately after completing a quiz in this session. Start the quiz to attempt it.</div>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button class="btn btn-accent" onclick="renderQuizAttemptOrPreview('${quizId}', new URLSearchParams())">Attempt Quiz</button>
+      <button class="btn btn-ghost" onclick="go('/quizzes')">Quiz Library</button>
+    </div>
+  </div></div>`);
+}
+
+function renderResultsPage(items, score, total, pct, pass, wrong, skip, timeStr, savedResultId){
+  const circ=2*Math.PI*54, offset=circ-(pct/100)*circ;
+  const nm=profession?(lang==='ur'?profession.label_ur:profession.label_en):'Quiz';
+  const resultsURL = currentQuizId ? `${location.origin}/quizzes/${currentQuizId}/results${currentUser?`?uid=${currentUser.uid}`:''}` : '';
+
+  const previewBtn = currentQuizId
+    ? `<button class="btn btn-ghost btn-full btn-sm" onclick="openQuizPreview('${currentQuizId}', _lastQuizItems)">
+         <i class="fa-solid fa-eye"></i> ${t('preview_quiz')}
+       </button>`
+    : '';
+
+    const reviewHTML=items.map((item,i)=>{
+      const cls=item.isCorrect?'correct':item.skipped?'skipped':'incorrect';
+      const icon=item.isCorrect?'fa-check':item.skipped?'fa-minus':'fa-xmark';
+      const qHtml = mdInline(item.question);
+      let ans='';
+      if(item.skipped)
+        ans=`<div class="review-answer-row skipped-row"><span class="review-tag">SKIPPED</span></div>
+             <div class="review-answer-row correct-ans"><span class="review-tag">${t('correct_answer').toUpperCase()}</span><span class="md">${mdInline(item.correctAnswer)}</span></div>`;
+      else if(item.isCorrect)
+        ans=`<div class="review-answer-row user-correct"><i class="fa-solid fa-check" style="font-size:10px"></i><span class="review-tag">${t('your_answer').toUpperCase()}</span><span class="md">${mdInline(item.selectedAnswer)}</span></div>`;
+      else
+        ans=`<div class="review-answer-row user-wrong"><i class="fa-solid fa-xmark" style="font-size:10px"></i><span class="review-tag">${t('your_answer').toUpperCase()}</span><span class="md">${mdInline(item.selectedAnswer)}</span></div>
+             <div class="review-answer-row correct-ans"><i class="fa-solid fa-check" style="font-size:10px"></i><span class="review-tag">${t('correct_answer').toUpperCase()}</span><span class="md">${mdInline(item.correctAnswer)}</span></div>`;
+      return `<div class="review-card ${cls}" style="animation-delay:${i*.02}s">
+        <div class="review-card-head">
+          <div class="review-icon ${cls}"><i class="fa-solid ${icon}"></i></div>
+          <div class="review-q md"><span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-subtle)">${i+1}. </span>${qHtml}</div>
+        </div>
+        <div class="review-answers">${ans}</div>
+      </div>`;
+    }).join('');
 
   setV(`<div class="page" style="animation:fadeUp .25s ease both">
     <div class="page-header">
-      <div class="page-header-meta">
-        <div class="breadcrumb">
-          <span style="cursor:pointer" onclick="renderTopics()">${t('choose_topic')}</span>
-          <span class="sep">/</span><span>${nm}</span><span class="sep">/</span><span>${t('result')}</span>
-        </div>
-        <button class="btn btn-ghost btn-sm" style="margin-inline-start:auto" onclick="resetQuiz()">
+      <div class="page-breadcrumb">
+        <span data-nav onclick="go('/user/topics')">${t('choose_topic')}</span>
+        <span class="sep">/</span><span>${nm}</span><span class="sep">/</span><span class="current">${t('result')}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div class="page-title">${pass?t('pass_title'):t('fail_title')}</div>
+        <button class="btn btn-ghost btn-sm" onclick="resetQuiz()">
           <i class="fa-solid fa-rotate-right"></i> ${t('new_assessment')}
         </button>
       </div>
-      <div class="page-title">${pass?t('pass_title'):t('fail_title')}</div>
-      <p class="page-desc">${currentUser.name} · ${nm}</p>
+      <p class="page-desc">${currentUser?.name||''} · ${nm}</p>
     </div>
+
+    ${resultsURL?`<div class="result-share-bar" style="margin-bottom:20px">
+      <i class="fa-solid fa-link" style="color:var(--accent);flex-shrink:0"></i>
+      <span class="result-share-url">${resultsURL}</span>
+      <button class="btn btn-ghost btn-sm" onclick="copyResultLink('${resultsURL}')">
+        <i class="fa-solid fa-copy"></i> ${t('copy_link')}
+      </button>
+    </div>`:''}
+
     <div class="results-layout">
       <div style="display:flex;flex-direction:column;gap:16px">
         <div class="score-display">
@@ -1391,13 +1988,17 @@ async function renderResults(){
         </div>
         <div class="panel-card">
           <div class="panel-head">${t('candidate')}</div>
-          <div class="panel-list-item"><span class="panel-list-label">${t('name')}</span><span class="panel-list-value">${currentUser.name}</span></div>
-          <div class="panel-list-item"><span class="panel-list-label">${t('email')}</span><span class="panel-list-value" style="font-size:12px">${currentUser.email}</span></div>
+          <div class="panel-list-item"><span class="panel-list-label">${t('name')}</span><span class="panel-list-value">${currentUser?.name||'-'}</span></div>
+          <div class="panel-list-item"><span class="panel-list-label">${t('email')}</span><span class="panel-list-value" style="font-size:12px">${currentUser?.email||'-'}</span></div>
           <div class="panel-list-item"><span class="panel-list-label">${t('questions')}</span><span class="panel-list-value">${total}</span></div>
+          <div class="panel-list-item"><span class="panel-list-label">${t('quiz_id')}</span><span class="panel-list-value" style="font-size:11px;font-family:var(--font-mono)">${currentQuizId||'-'}</span></div>
           <div class="panel-list-item"><span class="panel-list-label">${t('score')}</span><span class="panel-list-value">${score}/${total}</span></div>
           <div class="panel-list-item"><span class="panel-list-label">${t('time')}</span><span class="panel-list-value">${timeStr}</span></div>
+          ${currentQuizSource?`<div class="panel-list-item"><span class="panel-list-label">Source</span><span class="badge" style="${currentQuizSource==='cache'?'background:var(--warning-subtle);color:var(--warning)':'background:var(--success-subtle);color:var(--success)'}">
+            ${currentQuizSource==='cache'?t('quiz_source_cache'):t('quiz_source_ai')}</span></div>`:''}
           <div class="panel-list-item"><span class="panel-list-label">${t('result')}</span><span class="badge ${pass?'badge-success':'badge-error'}">${pass?t('pass'):t('fail')}</span></div>
         </div>
+        ${previewBtn}
         <button class="btn btn-accent btn-full btn-lg" onclick="resetQuiz()">
           <i class="fa-solid fa-rotate-right"></i> ${t('new_assessment')}
         </button>
@@ -1413,7 +2014,8 @@ async function renderResults(){
     </div>
   </div>`);
 
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    applyMath($('main-content'));
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
     const arc=$('ring-arc'); if(arc) arc.style.strokeDashoffset=offset;
     const pe=$('pct-el'); if(pe){
       let cur=0;const tgt=pct;
@@ -1422,26 +2024,216 @@ async function renderResults(){
   }));
 }
 
-function resetQuiz(){ quiz=null;answers={};qIdx=0;startTime=null; if(timerID)clearInterval(timerID); renderTopics(); }
+function copyResultLink(url){
+  navigator.clipboard?.writeText(url).then(()=>toast(t('link_copied'),'success'))
+    .catch(()=>{ /* fallback */ const i=document.createElement('input'); i.value=url; document.body.appendChild(i); i.select(); document.execCommand('copy'); i.remove(); toast(t('link_copied'),'success'); });
+}
+
+function resetQuiz(){
+  quiz=null; answers={}; qIdx=0; startTime=null; currentQuizId=null; currentQuizSource=null;
+  window._lastResult=null; window._lastQuizItems=null;
+  if(timerID) clearInterval(timerID);
+  go('/user/topics');
+}
 
 /* ═══════════════════════════════════════════════════════════════════════
-   ADMIN PANEL
+   PUBLIC QUIZ LIBRARY  /quizzes
 ═══════════════════════════════════════════════════════════════════════ */
+async function renderQuizLibrary(){
+  setP(20);
+  const isAdmin = currentUser?.role==='admin' || currentUser?.uid==='admin';
+  const allowed = isAdmin ? null : new Set(currentUser?.topics||[]); // null = all allowed (admin)
+  const allowedProfs = isAdmin
+    ? PROFESSIONS
+    : PROFESSIONS.filter(p => allowed.has(p.id));
+
+  if (!isAdmin && allowedProfs.length === 0) {
+    setV(`<div class="page"><div class="state-box">
+      <div class="state-icon warn"><i class="fa-solid fa-lock"></i></div>
+      <div class="state-title">No Topics Assigned</div>
+      <div class="state-desc">You don't have access to any topics yet. Contact the administrator to get access.</div>
+      <a href="https://wa.me/923428910567" target="_blank" class="btn btn-accent">
+        <i class="fa-brands fa-whatsapp"></i> Contact Admin
+      </a>
+    </div></div>`);
+    return;
+  }
+
+  const topicOpts = allowedProfs.map(p=>`<option value="${p.id}">${lang==='ur'?p.label_ur:p.label_en}</option>`).join('');
+
+  setV(`<div class="page" style="animation:fadeUp .25s ease both">
+    <div class="page-header">
+      <div class="page-breadcrumb">
+        <span data-nav onclick="go('/user/dashboard')">${t('user_dashboard')}</span>
+        <span class="sep">/</span><span class="current">${t('quiz_lib_title')}</span>
+      </div>
+      <div class="page-title">${t('quiz_lib_title')}</div>
+      <p class="page-desc">${t('quiz_lib_sub')}</p>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:flex-end">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:11px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.05em">Topic</label>
+        <select id="qlib-pid" onchange="loadQuizLibrary()" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--fg);font-size:13px;min-width:200px">
+          <option value="">All My Topics</option>
+          ${topicOpts}
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:11px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.05em">Language</label>
+        <select id="qlib-lang" onchange="loadQuizLibrary()" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--fg);font-size:13px">
+          <option value="">All</option><option value="en">English</option><option value="ur">Urdu</option>
+        </select>
+      </div>
+    </div>
+    ${!isAdmin?`<div style="margin-bottom:16px;padding:10px 14px;background:var(--accent-subtle);border:1px solid var(--accent-border);border-radius:var(--radius-lg);font-size:13px;color:var(--accent);display:flex;align-items:center;gap:8px">
+      <i class="fa-solid fa-shield-halved"></i>
+      Showing quizzes for your ${allowedProfs.length} assigned topic${allowedProfs.length!==1?'s':''} only.
+    </div>`:''}
+    <div id="qlib-results"><div class="loader-wrap" style="padding:40px"><div class="spinner"></div></div></div>
+  </div>`);
+  await loadQuizLibrary();
+}
+
+async function loadQuizLibrary(){
+  const isAdmin = currentUser?.role==='admin' || currentUser?.uid==='admin';
+  const allowed = isAdmin ? null : new Set(currentUser?.topics||[]);
+  const pid = ($('qlib-pid')||{}).value||'';
+  const lang_f = ($('qlib-lang')||{}).value||'';
+  const el=$('qlib-results'); if(!el) return;
+  el.innerHTML=`<div class="loader-wrap" style="padding:40px"><div class="spinner"></div></div>`;
+
+  // If a specific topic is selected, verify the user is allowed (non-admin)
+  if (!isAdmin && pid && !allowed.has(pid)) {
+    el.innerHTML=`<div class="state-box"><div class="state-icon error"><i class="fa-solid fa-ban"></i></div>
+      <div class="state-title">Access Denied</div>
+      <div class="state-desc">You don't have access to this topic.</div></div>`;
+    return;
+  }
+
+  try {
+    const p = new URLSearchParams({limit:100});
+    if(pid) p.set('professionId',pid);
+    if(lang_f) p.set('lang',lang_f);
+    const {ok,data} = await api('GET',`/api/quizzes/public?${p}`);
+    if(!ok) throw new Error(data.error||'Failed to load');
+
+    // Filter to only allowed topics (client-side enforcement)
+    let quizzes = data.quizzes||[];
+    if (!isAdmin) {
+      quizzes = quizzes.filter(q => !q.professionId || allowed.has(q.professionId));
+    }
+
+    if(!quizzes.length){
+      el.innerHTML=`<div style="padding:40px;text-align:center;color:var(--fg-muted)">
+        <i class="fa-solid fa-inbox" style="font-size:32px;margin-bottom:12px;display:block;opacity:.4"></i>
+        <div style="font-size:14px">No quizzes found for your topics yet.</div>
+        <div style="font-size:13px;margin-top:4px">Generate your first quiz to see it here.</div>
+        <button class="btn btn-accent" style="margin-top:16px" onclick="go('/user/topics')">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Quiz
+        </button>
+      </div>`;
+      return;
+    }
+
+    el.innerHTML=`<div style="margin-bottom:12px;font-size:13px;color:var(--fg-muted)">${quizzes.length} quiz${quizzes.length!==1?'zes':''}</div>
+    <div class="quiz-lib-grid">
+      ${quizzes.map(q=>{
+        const prof=q.professionId?PROF_MAP[q.professionId]:null;
+        const label=prof?(lang==='ur'?prof.label_ur:prof.label_en):q.topic||q.professionId||'General';
+        return `<div class="quiz-lib-card" onclick="go('/quizzes/${q.quizId}')">
+          <div class="quiz-lib-card-head">
+            <div class="quiz-lib-card-title">${label}</div>
+            ${prof?`<div class="topic-card-icon" style="width:32px;height:32px;font-size:12px;flex-shrink:0"><i class="${prof.icon}"></i></div>`:''}
+          </div>
+          <div class="quiz-lib-card-meta">
+            ${q.professionId?`<span class="badge badge-default" style="font-size:10px">${q.professionId}</span>`:''}
+            <span class="badge badge-default" style="font-size:10px">${q.count} Q</span>
+            <span class="badge badge-default" style="font-size:10px">${(q.lang||'').toUpperCase()}</span>
+          </div>
+          <div class="quiz-lib-card-date">${q.createdAt?new Date(q.createdAt).toLocaleDateString():''}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+    setP(100);
+  } catch(e){ el.innerHTML=`<div style="padding:20px;color:var(--error);font-size:13px">${e.message}</div>`; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   QUIZ PREVIEW MODAL
+═══════════════════════════════════════════════════════════════════════ */
+  function quizPreviewHTML(qz, userAnswers){
+    const items=(qz.questions||[]).map((q,i)=>{
+      const ua = userAnswers ? userAnswers[i] : null;
+      const qHtml = mdInline(q.question);
+      const opts=(q.options||[]).map(o=>{
+        const isC=o===q.correctAnswer;
+        const isSel = ua && ua.selectedAnswer===o;
+        let style='padding:6px 10px;border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:6px;';
+        let icon='';
+        if(isC && isSel){ style+=`background:var(--success-subtle);color:var(--success);border-color:var(--success-border);`; icon=`<i class="fa-solid fa-check" style="font-size:10px;flex-shrink:0"></i>`; }
+        else if(isC){ style+=`background:var(--success-subtle);color:var(--success);border-color:var(--success-border);`; icon=`<i class="fa-solid fa-check" style="font-size:10px;flex-shrink:0"></i>`; }
+        else if(isSel){ style+=`background:var(--error-subtle);color:var(--error);border-color:var(--error-border);`; icon=`<i class="fa-solid fa-xmark" style="font-size:10px;flex-shrink:0"></i>`; }
+        return `<div style="${style}">${icon}<span class="md">${mdInline(o)}</span></div>`;
+      }).join('');
+    let statusBadge='';
+    if(ua){
+      if(ua.skipped) statusBadge=`<span style="font-size:11px;color:var(--fg-subtle);background:var(--bg-muted);padding:2px 8px;border-radius:4px"><i class="fa-solid fa-minus"></i> Skipped</span>`;
+      else if(ua.isCorrect) statusBadge=`<span style="font-size:11px;color:var(--success);background:var(--success-subtle);padding:2px 8px;border-radius:4px"><i class="fa-solid fa-check"></i> Correct</span>`;
+      else statusBadge=`<span style="font-size:11px;color:var(--error);background:var(--error-subtle);padding:2px 8px;border-radius:4px"><i class="fa-solid fa-xmark"></i> Incorrect</span>`;
+    }
+      return `<div style="border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="font-weight:600;font-size:13px;flex:1" class="md"><span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-subtle)">${i+1}. </span>${qHtml}</div>${statusBadge}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">${opts}</div>
+      </div>`;
+  }).join('');
+  const srcColor = qz._source==='cache' ? 'var(--warning)' : 'var(--success)';
+  const meta=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:4px">
+    ${qz.professionId?`<span class="badge badge-default">${qz.professionId}</span>`:''}
+    ${qz.count?`<span class="badge badge-default">${qz.count} Q</span>`:''}
+    ${qz.lang?`<span class="badge badge-default">${qz.lang.toUpperCase()}</span>`:''}
+    ${qz._source?`<span class="badge" style="background:color-mix(in srgb,${srcColor} 12%,transparent);color:${srcColor};border:1px solid color-mix(in srgb,${srcColor} 25%,transparent)">${qz._source==='cache'?'Cached':'AI Generated'}</span>`:''}
+    <span style="font-size:10px;color:var(--fg-subtle);font-family:var(--font-mono);margin-inline-start:auto">${qz.quizId||''}</span>
+  </div>`;
+  return `<div style="display:flex;flex-direction:column;gap:10px;max-height:65vh;overflow-y:auto;padding-right:4px">${meta}${items||'<div style="color:var(--fg-muted)">No questions.</div>'}</div>`;
+}
+  async function openQuizPreview(quizId, answerItems){
+    if (!quizId){ toast('Quiz not available','warn'); return; }
+    try {
+      const {ok,data}=await api('GET',`/api/quizzes/${quizId}`);
+      if (!ok){ toast(data.error||'Quiz not found','error'); return; }
+      if(currentQuizSource) data._source = currentQuizSource;
+      modal(t('preview_quiz'), quizPreviewHTML(data, answerItems||null),
+        `<button class="btn btn-ghost" onclick="closeModal()">${t('cancel')}</button>
+         <button class="btn btn-accent" onclick="closeModal();go('/quizzes/${quizId}')"><i class="fa-solid fa-external-link-alt"></i> Open</button>`);
+      applyMath($('modal-body'));
+    } catch(e){ toast(e.message,'error'); }
+  }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ADMIN PANEL  /admin/*
+═══════════════════════════════════════════════════════════════════════ */
+const ADMIN_NAV = [
+  {id:'dashboard', path:'/admin/dashboard', icon:'fa-chart-pie',   labelKey:'admin_dash'},
+  {id:'users',     path:'/admin/users',     icon:'fa-users',        labelKey:'admin_users'},
+  {id:'results',   path:'/admin/results',   icon:'fa-chart-bar',    labelKey:'admin_results'},
+  {id:'quizzes',   path:'/admin/quizzes',   icon:'fa-book-open',    labelKey:'admin_quizzes'},
+];
+
 function renderAdmin(tab){
-  adminTab=tab||adminTab||'dashboard';
-  history.replaceState(null,'','/#admin/'+adminTab);
-  hideBar(); setP(0);
-  const nav=[
-    {id:'dashboard',icon:'fa-chart-pie',   label:t('admin_dash')},
-    {id:'users',    icon:'fa-users',        label:t('admin_users')},
-    {id:'results',  icon:'fa-chart-bar',    label:t('admin_results')},
-  ];
-  const navH=nav.map(n=>`<div class="admin-nav-item ${adminTab===n.id?'active':''}" onclick="renderAdmin('${n.id}')">
-    <i class="fa-solid ${n.icon}"></i>${n.label}</div>`).join('');
+  const activeNav = ADMIN_NAV.find(n=>n.id===tab)||ADMIN_NAV[0];
+  $('main-topbar').style.display = 'none';
+  setP(30);
+  const navH=ADMIN_NAV.map(n=>`
+    <a class="admin-nav-item ${tab===n.id?'active':''}" href="${n.path}" onclick="navigate(event,'${n.path}')">
+      <i class="fa-solid ${n.icon}"></i>${t(n.labelKey)}
+    </a>`).join('');
   let content='';
-  if(adminTab==='dashboard') content=adminDashHTML();
-  else if(adminTab==='users') content=adminUsersHTML();
-  else if(adminTab==='results') content=adminResultsHTML();
+  if(tab==='dashboard') content=adminDashHTML();
+  else if(tab==='users') content=adminUsersHTML();
+  else if(tab==='results') content=adminResultsHTML();
+  else if(tab==='quizzes') content=adminQuizzesHTML();
   setV(`<div class="admin-shell">
     <aside class="admin-nav">
       <div class="admin-nav-logo">
@@ -1453,6 +2245,9 @@ function renderAdmin(tab){
       <div class="admin-nav-section">Navigation</div>
       ${navH}
       <div style="margin-top:auto;padding:16px 20px;border-top:1px solid var(--border)">
+        <button class="btn btn-ghost btn-full btn-sm" onclick="go('/')" style="justify-content:flex-start;gap:10px;margin-bottom:6px">
+          <i class="fa-solid fa-house"></i>Home
+        </button>
         <button class="btn btn-ghost btn-full btn-sm" onclick="doLogout()" style="justify-content:flex-start;gap:10px">
           <i class="fa-solid fa-arrow-right-from-bracket"></i>${t('logout')}
         </button>
@@ -1460,12 +2255,14 @@ function renderAdmin(tab){
     </aside>
     <div class="admin-content" id="admin-content">${content}</div>
   </div>`);
-  if(adminTab==='dashboard') loadDash();
-  else if(adminTab==='users') loadUsers();
-  else if(adminTab==='results') loadResults();
+  if(tab==='dashboard') loadDash();
+  else if(tab==='users') loadUsers();
+  else if(tab==='results') loadResults();
+  else if(tab==='quizzes'){ _adminQuizCache=null; loadAdminQuizzes(); }
+  setP(100);
 }
 
-/* ─ Dashboard ─ */
+/* ─ Admin Dashboard ─ */
 function adminDashHTML(){
   return `<div style="animation:fadeUp .25s ease both">
     <div style="margin-bottom:24px">
@@ -1483,151 +2280,161 @@ function adminDashHTML(){
 }
 async function loadDash(){
   try {
-    const [sr,rr]=await Promise.all([api('GET','/api/stats'),api('GET','/api/results?limit=10')]);
+    const [{ok:so,data:stats},{ok:ro,data:results}] = await Promise.all([
+      api('GET','/api/stats'), api('GET','/api/results?limit=5')
+    ]);
     const sg=$('stats-grid');
-    if(sg&&sr.ok){
-      const s=sr.data;
-      sg.innerHTML=`
-        <div class="stat-card"><div class="stat-card-num">${s.totalUsers}</div><div class="stat-card-label">${t('total_users')}</div></div>
-        <div class="stat-card"><div class="stat-card-num" style="color:var(--success)">${s.activeUsers}</div><div class="stat-card-label">${t('active_users')}</div></div>
-        <div class="stat-card"><div class="stat-card-num">${s.totalResults}</div><div class="stat-card-label">${t('total_results')}</div></div>
-        <div class="stat-card"><div class="stat-card-num">${s.avgScore}%</div><div class="stat-card-label">${t('avg_score')}</div></div>`;
+    if(so&&sg){
+      sg.innerHTML=[
+        {n:stats.totalUsers,   l:t('total_users'),   icon:'fa-users',      c:'var(--accent)'},
+        {n:stats.activeUsers,  l:t('active_users'),  icon:'fa-user-check', c:'var(--success)'},
+        {n:stats.totalResults, l:t('total_results'), icon:'fa-chart-bar',  c:'var(--warning)'},
+        {n:stats.totalQuizzes||0,l:'Total Quizzes',  icon:'fa-book-open',  c:'var(--accent)'},
+        {n:(stats.avgScore||0)+'%',l:t('avg_score'), icon:'fa-star',       c:'var(--success)'},
+      ].map(s=>`<div class="stat-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="width:32px;height:32px;background:color-mix(in srgb,${s.c} 15%,transparent);color:${s.c};border-radius:var(--radius-md);display:grid;place-items:center;font-size:13px">
+            <i class="fa-solid ${s.icon}"></i></div>
+          <div class="stat-card-label">${s.l}</div>
+        </div>
+        <div class="stat-card-num">${s.n}</div>
+      </div>`).join('');
     }
-    const rg=$('recent-results');
-    if(rg&&rr.ok&&rr.data.length){
-      rg.innerHTML=`<div class="table-wrap"><table>
-        <thead><tr><th>${t('name')}</th><th>Topic</th><th>Score</th><th>${t('result')}</th><th>Date</th></tr></thead>
-        <tbody>${rr.data.slice(0,10).map(r=>`<tr>
+    const rr=$('recent-results');
+    if(ro&&results?.length&&rr){
+      rr.innerHTML=`<div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Topic</th><th>Score</th><th>Result</th><th>Quiz</th><th>Date</th></tr></thead>
+        <tbody>${results.slice(0,5).map(r=>`<tr>
           <td style="font-weight:500">${r.userName||'-'}</td>
           <td><span class="badge badge-default">${r.profession||'-'}</span></td>
-          <td><span class="text-mono">${(r.percentage||0).toFixed(1)}%</span></td>
+          <td style="font-family:var(--font-mono)">${r.score||0}/${r.total||0} (${(r.percentage||0).toFixed(0)}%)</td>
           <td><span class="badge ${r.pass?'badge-success':'badge-error'}">${r.pass?t('pass'):t('fail')}</span></td>
+          <td>${r.quizId?`<button class="btn btn-ghost btn-sm" onclick="openQuizPreview('${r.quizId}')"><i class="fa-solid fa-eye"></i></button><a href="/quizzes/${r.quizId}" target="_blank" class="btn btn-ghost btn-sm" style="text-decoration:none"><i class="fa-solid fa-external-link-alt"></i></a>`:'-'}</td>
           <td style="font-size:12px;color:var(--fg-muted)">${r.createdAt?new Date(r.createdAt).toLocaleDateString():'-'}</td>
         </tr>`).join('')}</tbody>
-      </table></div>`;
-    } else if(rg) rg.innerHTML=`<div style="padding:20px;color:var(--fg-muted);font-size:13px">${t('no_results')}</div>`;
-  } catch(e){ toast('Failed to load stats: '+e.message,'error'); }
+      </table></div>
+      <div style="margin-top:10px"><a href="/admin/results" class="btn btn-ghost btn-sm" onclick="navigate(event,'/admin/results')">View all results →</a></div>`;
+    } else if(rr){ rr.innerHTML=`<div style="padding:20px;color:var(--fg-muted);font-size:13px">${t('no_results')}</div>`; }
+  } catch(e){ console.error(e); }
 }
 
-/* ─ Users ─ */
+/* ─ Admin Users ─ */
 function adminUsersHTML(){
   return `<div style="animation:fadeUp .25s ease both">
-    <div class="flex-between" style="margin-bottom:24px">
-      <div><h1 style="font-family:var(--font-serif);font-size:26px;font-weight:600;margin-bottom:4px">${t('admin_users')}</h1>
-      <p style="color:var(--fg-muted);font-size:14px">Manage registered exam candidates</p></div>
-      <button class="btn btn-accent" onclick="openUserModal()">
-        <i class="fa-solid fa-plus"></i> ${t('add_user')}
-      </button>
+    <div style="margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1 style="font-family:var(--font-serif);font-size:26px;font-weight:600;margin-bottom:4px">${t('admin_users')}</h1>
+        <p style="color:var(--fg-muted);font-size:14px">Manage platform users and their topic access</p>
+      </div>
+      <button class="btn btn-accent" onclick="openUserModal()"><i class="fa-solid fa-plus"></i> ${t('add_user')}</button>
     </div>
     <div id="users-table"><div style="padding:20px;color:var(--fg-muted);font-size:13px">Loading…</div></div>
   </div>`;
 }
 async function loadUsers(){
   try {
-    const {ok:o,data}=await api('GET','/api/users');
-    const el=$('users-table'); if(!el)return;
-    if(!o||!data.length){el.innerHTML=`<div style="padding:20px;color:var(--fg-muted);font-size:13px">${t('no_users')}</div>`;return;}
-    const today=new Date();today.setHours(0,0,0,0);
+    const {ok,data}=await api('GET','/api/users');
+    const el=$('users-table');if(!el)return;
+    if(!ok||!data.length){el.innerHTML=`<div style="padding:20px;color:var(--fg-muted);font-size:13px">${t('no_users')}</div>`;return;}
+    const today=new Date(); today.setHours(0,0,0,0);
     el.innerHTML=`<div class="table-wrap"><table>
-      <thead><tr><th>${t('user_name')}</th><th>${t('user_email')}</th><th>${t('user_phone')}</th>
-      <th>${t('user_expiry')}</th><th>${t('user_status')}</th><th>${t('user_topics')}</th><th>${t('user_actions')}</th></tr></thead>
+      <thead><tr><th>${t('user_name')}</th><th>${t('user_email')}</th><th>${t('user_phone')}</th><th>${t('user_topics')}</th><th>${t('user_expiry')}</th><th>${t('user_status')}</th><th>${t('user_actions')}</th></tr></thead>
       <tbody>${data.map(u=>{
-        const exp=new Date(u.expiryDate);exp.setHours(0,0,0,0);
-        const days=Math.ceil((exp-today)/(86400000));
-        const st=exp<today?'expired':days<=7?'soon':'active';
-        const stLabel={active:t('status_active'),expired:t('status_expired'),soon:t('status_soon')}[st];
-        const tags=(u.topics||[]).slice(0,2).map(id=>`<span class="tag">${id}</span>`).join('');
-        const more=(u.topics||[]).length>2?`<span class="badge badge-default">+${u.topics.length-2}</span>`:'';
+        const exp=new Date(u.expiryDate); exp.setHours(0,0,0,0);
+        const daysLeft=Math.ceil((exp-today)/86400000);
+        const status=daysLeft<0?'expired':daysLeft<=7?'soon':'active';
+        const statusLabel={active:t('status_active'),expired:t('status_expired'),soon:t('status_soon')}[status];
+        const topics=(u.topics||[]).slice(0,3).map(id=>`<span class="tag" style="font-size:10px">${id}</span>`).join('');
+        const more=(u.topics||[]).length>3?`<span style="font-size:11px;color:var(--fg-muted)">+${(u.topics||[]).length-3}</span>`:'';
         return `<tr>
-          <td style="font-weight:500">${u.name||'-'}</td>
-          <td style="font-size:12px;font-family:var(--font-mono)">${u.email||'-'}</td>
-          <td>${u.phone||'-'}</td>
-          <td style="font-family:var(--font-mono);font-size:12px">${u.expiryDate||'-'}</td>
-          <td><span class="expiry-dot ${st}"></span><span class="badge badge-${st==='active'?'success':st==='soon'?'warn':'error'}">${stLabel}</span></td>
-          <td><div class="tag-list">${tags}${more}</div></td>
-          <td><div style="display:flex;gap:6px">
-            <button class="btn btn-ghost btn-sm" onclick='openUserModal(${JSON.stringify(u)})'>
-              <i class="fa-solid fa-pencil"></i>
-            </button>
-            <button class="btn btn-ghost btn-sm" style="color:var(--error)" onclick="deleteUser('${u.uid}',${JSON.stringify(u.name||u.email)})">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </div></td>
+          <td style="font-weight:500">${u.name}</td>
+          <td style="font-size:12px;font-family:var(--font-mono)">${u.email}</td>
+          <td style="font-size:12px">${u.phone||'-'}</td>
+          <td><div class="tag-list">${topics}${more}</div></td>
+          <td style="font-size:12px">${u.expiryDate||'-'}</td>
+          <td><span class="badge ${status==='active'?'badge-success':status==='soon'?'badge-warn':'badge-error'}">${statusLabel}</span></td>
+          <td style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="openUserModal(${JSON.stringify(JSON.stringify(u))})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn btn-ghost btn-sm" onclick="confirmDelete('${u.uid}')" title="Delete" style="color:var(--error)"><i class="fa-solid fa-trash"></i></button>
+          </td>
         </tr>`;
       }).join('')}</tbody>
     </table></div>`;
   } catch(e){ toast('Failed to load users: '+e.message,'error'); }
 }
 
-function openUserModal(user=null){
-  const isEdit=!!user;
-  const topicOpts=PROFESSIONS.map(p=>`<option value="${p.id}" ${user&&(user.topics||[]).includes(p.id)?'selected':''}>
-    ${p.label_en} (${p.id})</option>`).join('');
-  modal(isEdit?t('edit_user'):t('add_user'),
-    `<div style="display:flex;flex-direction:column;gap:14px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="field"><label class="field-label">${t('user_name')} <span class="required">*</span></label>
-          <input id="u-name" type="text" class="field-input" value="${user?.name||''}" placeholder="Full Name"></div>
-        <div class="field"><label class="field-label">${t('user_email')} <span class="required">*</span></label>
-          <input id="u-email" type="email" class="field-input" value="${user?.email||''}" placeholder="email@example.com"></div>
-        <div class="field"><label class="field-label">${t('user_pass')} ${isEdit?'(blank = keep)':''}  ${isEdit?'':' <span class="required">*</span>'}</label>
-          <input id="u-pass" type="text" class="field-input" value="" placeholder="Password"></div>
-        <div class="field"><label class="field-label">${t('user_phone')}</label>
-          <input id="u-phone" type="text" class="field-input" value="${user?.phone||''}" placeholder="+92..."></div>
-        <div class="field"><label class="field-label">${t('user_start')}</label>
-          <input id="u-start" type="date" class="field-input" value="${user?.startDate||new Date().toISOString().slice(0,10)}"></div>
-        <div class="field"><label class="field-label">${t('user_expiry')} <span class="required">*</span></label>
-          <input id="u-expiry" type="date" class="field-input" value="${user?.expiryDate||''}" required></div>
-      </div>
-      <div class="field"><label class="field-label">${t('user_topics')} <span class="required">*</span></label>
-        <select id="u-topics" multiple class="field-input" style="height:140px">${topicOpts}</select>
-        <span class="field-hint">Hold Ctrl/Cmd to select multiple</span></div>
-      <div class="field"><label class="field-label">${t('user_notes')}</label>
-        <input id="u-notes" type="text" class="field-input" value="${user?.additionalNotes||''}" placeholder="Notes…"></div>
-    </div>`,
+function openUserModal(userJson=null){
+  const u=userJson?JSON.parse(userJson):null;
+  const title=u?t('edit_user'):t('add_user');
+  const topicOpts=PROFESSIONS.map(p=>`
+    <div class="multi-opt ${(u?.topics||[]).includes(p.id)?'selected':''}" data-id="${p.id}" onclick="toggleTopic(this,'${p.id}')">
+      <div class="multi-opt-check">${(u?.topics||[]).includes(p.id)?'<i class="fa-solid fa-check" style="font-size:10px"></i>':''}</div>
+      <div style="flex:1;font-size:12px">${p.label_en}</div>
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--fg-subtle)">${p.id}</span>
+    </div>`).join('');
+  modal(title,`
+    <div class="field"><label class="field-label">${t('user_name')} *</label>
+      <input id="u-name" class="field-input" value="${u?.name||''}" placeholder="Full name"></div>
+    <div class="field"><label class="field-label">${t('user_email')} *</label>
+      <input id="u-email" class="field-input" type="email" value="${u?.email||''}" placeholder="email@example.com"></div>
+    <div class="field"><label class="field-label">${t('user_phone')}</label>
+      <input id="u-phone" class="field-input" value="${u?.phone||''}" placeholder="+92..."></div>
+    <div class="field"><label class="field-label">${t('user_pass')} ${u?'(leave blank to keep)':' *'}</label>
+      <input id="u-pass" class="field-input" type="password" placeholder="••••••••"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label class="field-label">${t('user_start')}</label>
+        <input id="u-start" class="field-input" type="date" value="${u?.startDate||new Date().toISOString().slice(0,10)}"></div>
+      <div class="field"><label class="field-label">${t('user_expiry')} *</label>
+        <input id="u-expiry" class="field-input" type="date" value="${u?.expiryDate||''}"></div>
+    </div>
+    <div class="field"><label class="field-label">${t('user_topics')} *</label>
+      <div style="border:1.5px solid var(--border-strong);border-radius:var(--radius-md);max-height:180px;overflow-y:auto">${topicOpts}</div>
+    </div>
+    <div class="field"><label class="field-label">${t('user_notes')}</label>
+      <input id="u-notes" class="field-input" value="${u?.additionalNotes||''}" placeholder="Optional notes"></div>
+    <input type="hidden" id="u-uid" value="${u?.uid||''}">`,
     `<button class="btn btn-ghost" onclick="closeModal()">${t('cancel')}</button>
-     <button class="btn btn-accent" onclick="saveUser(${isEdit?`'${user.uid}'`:'null'})">
-       <i class="fa-solid fa-floppy-disk"></i> ${t('save')}
-     </button>`);
+     <button class="btn btn-accent" onclick="saveUser('${u?.uid||''}')">${t('save')}</button>`);
 }
-
-async function saveUser(uid){
-  const name=$('u-name')?.value.trim();
-  const email=$('u-email')?.value.trim().toLowerCase();
-  const pass=$('u-pass')?.value.trim();
-  const phone=$('u-phone')?.value.trim();
-  const startDate=$('u-start')?.value;
-  const expiryDate=$('u-expiry')?.value;
-  const topics=Array.from($('u-topics').selectedOptions).map(o=>o.value);
-  const additionalNotes=$('u-notes')?.value.trim();
+let _selectedTopics=[];
+function toggleTopic(el,id){
+  el.classList.toggle('selected');
+  const chk=el.querySelector('.multi-opt-check');
+  if(el.classList.contains('selected')) chk.innerHTML='<i class="fa-solid fa-check" style="font-size:10px"></i>';
+  else chk.innerHTML='';
+}
+async function saveUser(uid_=''){ 
+  const name=$('u-name')?.value.trim(),email=$('u-email')?.value.trim(),
+    pass=$('u-pass')?.value,phone=$('u-phone')?.value.trim(),
+    startDate=$('u-start')?.value,expiryDate=$('u-expiry')?.value,
+    additionalNotes=$('u-notes')?.value.trim();
+  const topics=[...document.querySelectorAll('.multi-opt.selected')].map(el=>el.dataset.id);
   if(!name||!email||!expiryDate||!topics.length){toast('Fill all required fields','error');return;}
   const body={name,email,phone,startDate,expiryDate,topics,additionalNotes};
   if(pass) body.password=pass;
-  else if(!uid){toast('Password required for new users','error');return;}
   try {
-    const {ok,data}=uid?await api('PUT',`/api/users/${uid}`,body):await api('POST','/api/users',body);
+    const {ok,data}=uid_
+      ?await api('PUT',`/api/users/${uid_}`,body)
+      :await api('POST','/api/users',{...body,password:pass});
     if(!ok){toast(data.error||'Save failed','error');return;}
-    toast(uid?'User updated':'User created','success');
-    closeModal(); renderAdmin('users');
-  } catch(e){ toast(e.message,'error'); }
+    closeModal(); toast('User saved','success'); loadUsers();
+  } catch(e){toast(e.message,'error');}
 }
-
-function deleteUser(uid, name){
+async function confirmDelete(uid_){
   modal(t('confirm_delete'),
-    `<div class="callout error"><i class="fa-solid fa-triangle-exclamation"></i>
-     <div>Delete <strong>${name}</strong>? This cannot be undone.</div></div>`,
+    `<div class="callout warn"><i class="fa-solid fa-triangle-exclamation"></i><div>This will permanently delete the user and all their data.</div></div>`,
     `<button class="btn btn-ghost" onclick="closeModal()">${t('cancel')}</button>
-     <button class="btn btn-error" onclick="confirmDelete('${uid}')"><i class="fa-solid fa-trash"></i> ${t('delete')}</button>`);
+     <button class="btn btn-accent" style="background:var(--error);border-color:var(--error)" onclick="deleteUser('${uid_}')">${t('delete')}</button>`);
 }
-async function confirmDelete(uid){
+async function deleteUser(uid_){
   try {
-    const {ok,data}=await api('DELETE',`/api/users/${uid}`);
+    const {ok,data}=await api('DELETE',`/api/users/${uid_}`);
     if(!ok){toast(data.error||'Delete failed','error');return;}
-    toast('User deleted','success'); closeModal(); renderAdmin('users');
-  } catch(e){ toast(e.message,'error'); }
+    closeModal(); toast('User deleted','success'); loadUsers();
+  } catch(e){toast(e.message,'error');}
 }
 
-/* ─ Results ─ */
+/* ─ Admin Results ─ */
 function adminResultsHTML(){
   return `<div style="animation:fadeUp .25s ease both">
     <div style="margin-bottom:24px">
@@ -1644,7 +2451,7 @@ async function loadResults(){
     if(!ok||!data.length){el.innerHTML=`<div style="padding:20px;color:var(--fg-muted);font-size:13px">${t('no_results')}</div>`;return;}
     el.innerHTML=`<div class="table-wrap"><table>
       <thead><tr><th>${t('name')}</th><th>${t('email')}</th><th>Topic</th>
-        <th>${t('score')}</th><th>%</th><th>${t('time')}</th><th>${t('result')}</th><th>Date</th></tr></thead>
+        <th>${t('score')}</th><th>%</th><th>${t('time')}</th><th>${t('result')}</th><th>Source</th><th>Quiz</th><th>Date</th></tr></thead>
       <tbody>${data.map(r=>`<tr>
         <td style="font-weight:500">${r.userName||'-'}</td>
         <td style="font-size:12px;font-family:var(--font-mono)">${r.userEmail||'-'}</td>
@@ -1653,19 +2460,123 @@ async function loadResults(){
         <td style="font-family:var(--font-mono)">${(r.percentage||0).toFixed(1)}%</td>
         <td style="font-size:12px">${r.timeTaken||'-'}</td>
         <td><span class="badge ${r.pass?'badge-success':'badge-error'}">${r.pass?t('pass'):t('fail')}</span></td>
+        <td>${r.quizSource==='cache'?`<span class="badge" style="background:var(--warning-subtle);color:var(--warning);font-size:10px">Cached</span>`:`<span class="badge badge-default" style="font-size:10px">AI</span>`}</td>
+        <td style="display:flex;gap:4px">
+          ${r.quizId?`<button class="btn btn-ghost btn-sm" onclick="openQuizPreview('${r.quizId}')" title="Preview"><i class="fa-solid fa-eye"></i></button>
+            <a href="/quizzes/${r.quizId}" target="_blank" class="btn btn-ghost btn-sm" title="Open" style="text-decoration:none"><i class="fa-solid fa-external-link-alt"></i></a>`:'-'}
+        </td>
         <td style="font-size:12px;color:var(--fg-muted)">${r.createdAt?new Date(r.createdAt).toLocaleDateString():'-'}</td>
       </tr>`).join('')}</tbody>
     </table></div>`;
   } catch(e){ toast('Failed to load results: '+e.message,'error'); }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   ROUTING
-═══════════════════════════════════════════════════════════════════════ */
-function parseHash(){
-  const h=window.location.hash.replace('#','');
-  if(h.startsWith('admin')){return{route:'admin',tab:h.split('/')[1]||'dashboard'};}
-  return{route:null};
+/* ─ Admin Quiz Library ─ */
+const PROFESSIONS_LIST_ADMIN = PROFESSIONS.map(p=>({id:p.id,label:p.label_en}));
+/* All quizzes cache — loaded once per tab visit, filtered client-side */
+let _adminQuizCache = null;
+
+function adminQuizzesHTML(){
+  const profOpts = PROFESSIONS_LIST_ADMIN.map(p=>`<option value="${p.id}">${p.label}</option>`).join('');
+  return `<div style="animation:fadeUp .25s ease both">
+    <div style="margin-bottom:20px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1 style="font-family:var(--font-serif);font-size:26px;font-weight:600;margin-bottom:4px">${t('admin_quizzes')}</h1>
+        <p style="color:var(--fg-muted);font-size:14px">All stored quizzes — served as AI fallback when models are unavailable.</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="_adminQuizCache=null;loadAdminQuizzes()">
+        <i class="fa-solid fa-rotate-right"></i> Refresh
+      </button>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:11px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.05em">Filter by Topic</label>
+        <select id="ql-pid" onchange="renderAdminQuizTable()" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--fg);font-size:13px;min-width:220px">
+          <option value="">All Topics</option>${profOpts}
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:11px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.05em">Language</label>
+        <select id="ql-lang" onchange="renderAdminQuizTable()" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--fg);font-size:13px">
+          <option value="">All</option><option value="en">English</option><option value="ur">Urdu</option>
+        </select>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="font-size:11px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.05em">Questions</label>
+        <select id="ql-count" onchange="renderAdminQuizTable()" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--fg);font-size:13px">
+          <option value="">Any</option><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="30">30</option><option value="50">50</option>
+        </select>
+      </div>
+    </div>
+    <div id="ql-stats" style="margin-bottom:12px"></div>
+    <div id="quiz-lib-table"><div class="loader-wrap" style="padding:40px"><div class="spinner"></div><div class="loader-sub">Loading quizzes…</div></div></div>
+  </div>`;
+}
+
+async function loadAdminQuizzes(){
+  const el=$('quiz-lib-table'); if(!el) return;
+  if(_adminQuizCache){renderAdminQuizTable();return;}
+  el.innerHTML=`<div class="loader-wrap" style="padding:40px"><div class="spinner"></div><div class="loader-sub">Loading quizzes…</div></div>`;
+  try {
+    // Fetch up to 500 quizzes using the public endpoint (no filter needed, admin can see all)
+    const {ok,data}=await api('GET','/api/quizzes/public?limit=100',null,false);
+    if(!ok) throw new Error(data.error||'Failed to load quizzes');
+    _adminQuizCache = data.quizzes||[];
+    renderAdminQuizTable();
+  } catch(e){
+    if(el) el.innerHTML=`<div style="padding:20px;color:var(--error);font-size:13px"><i class="fa-solid fa-circle-exclamation"></i> ${e.message}</div>`;
+  }
+}
+
+function renderAdminQuizTable(){
+  const el=$('quiz-lib-table'),statsEl=$('ql-stats'); if(!el||!_adminQuizCache) return;
+  const pid=($('ql-pid')||{}).value||'';
+  const lang_=($('ql-lang')||{}).value||'';
+  const count=($('ql-count')||{}).value||'';
+
+  let list=_adminQuizCache;
+  if(pid)    list=list.filter(q=>q.professionId===pid);
+  if(lang_)  list=list.filter(q=>(q.lang||'')===lang_);
+  if(count)  list=list.filter(q=>String(q.count)===count);
+
+  if(statsEl) statsEl.innerHTML=`
+    <span class="badge badge-default">${list.length} of ${_adminQuizCache.length} quiz${_adminQuizCache.length!==1?'zes':''}</span>
+    ${pid||lang_||count?`<button class="btn btn-ghost btn-sm" style="margin-inline-start:6px" onclick="
+      const s=['ql-pid','ql-lang','ql-count'];s.forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderAdminQuizTable()">
+      <i class='fa-solid fa-xmark'></i> Clear filters</button>`:''}`;
+
+  if(!list.length){
+    el.innerHTML=`<div style="padding:40px;text-align:center;color:var(--fg-muted)">
+      <i class="fa-solid fa-inbox" style="font-size:32px;margin-bottom:12px;display:block;opacity:.4"></i>
+      <div style="font-size:14px">${_adminQuizCache.length?'No quizzes match these filters.':'No quizzes stored yet.'}</div>
+      ${_adminQuizCache.length===0?'<div style="font-size:13px;margin-top:4px">Quizzes are saved automatically when users generate them.</div>':''}
+    </div>`;
+    return;
+  }
+
+  el.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>Quiz ID</th><th>Topic</th><th>Lang</th><th>Qs</th><th>Created</th><th>Actions</th></tr></thead>
+    <tbody>${list.map(q=>{
+      const prof=q.professionId?PROF_MAP[q.professionId]:null;
+      const label=prof?prof.label_en:(q.topic||q.professionId||'—');
+      return `<tr>
+        <td style="font-family:var(--font-mono);font-size:11px;color:var(--fg-subtle)">${q.quizId}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:6px">
+            ${prof?`<div style="width:22px;height:22px;background:var(--accent-subtle);color:var(--accent);border-radius:4px;display:grid;place-items:center;font-size:10px;flex-shrink:0"><i class="${prof.icon}"></i></div>`:''}
+            <span style="font-size:13px;font-weight:500">${label}</span>
+          </div>
+        </td>
+        <td><span class="badge badge-default">${(q.lang||'').toUpperCase()}</span></td>
+        <td style="font-family:var(--font-mono);font-weight:600">${q.count}</td>
+        <td style="font-size:12px;color:var(--fg-muted)">${q.createdAt?new Date(q.createdAt).toLocaleDateString():'-'}</td>
+        <td style="display:flex;gap:4px">
+          <button class="btn btn-ghost btn-sm" onclick="openQuizPreview('${q.quizId}')" title="Preview"><i class="fa-solid fa-eye"></i></button>
+          <a href="/quizzes/${q.quizId}" target="_blank" class="btn btn-ghost btn-sm" title="Open" style="text-decoration:none"><i class="fa-solid fa-external-link-alt"></i></a>
+        </td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1673,15 +2584,9 @@ function parseHash(){
 ═══════════════════════════════════════════════════════════════════════ */
 function boot(){
   setP(5);
-  const {route,tab}=parseHash();
-  if(currentUser&&authToken){
-    renderChip();
-    $('main-content').style.padding='';
-    if(currentUser.role==='admin') renderAdmin(route==='admin'?tab:'dashboard');
-    else renderTopics();
-  } else {
-    renderLogin(route==='admin'?{adminRedirect:tab}:{});
-  }
+  setupMarkdown();
+  renderChip();
+  route();
 }
 
 window.addEventListener('load', boot);
