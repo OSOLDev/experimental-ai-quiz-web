@@ -16,4 +16,4 @@ id = "8fc9e78e260d40f09d2eb93aab58ab11"
 # CEREBRAS_API_KEY     — Cerebras / Llama (fallback)
 # JWT_SECRET           — Token signing secret (generate a long random string)
 # ADMIN_EMAIL          — Admin login email   (default: admin@psc.ajk)
-# ADMIN_PASSWORD       — Admin password      (default: Admin@PSC2024!)
+# ADMIN_PASSWORD       — Admin password      (default: Admin@PSC2026!)

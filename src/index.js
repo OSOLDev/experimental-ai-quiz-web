@@ -6,14 +6,13 @@
  * PAGE ROUTES (all serve index.html — SPA with History API routing)
  * ─────────────────────────────────────────────────────────────────
  * /                          Landing page
- * /user/account              User login
+ * /account                   Login (unified — admin auto-redirected)
  * /user/dashboard            User dashboard
  * /user/topics               Topic selection
  * /quizzes/create            Quiz configuration
  * /quizzes                   Public quiz library
  * /quizzes/:id               Quiz attempt / preview
  * /quizzes/:id/results       Quiz results for current user
- * /admin/account             Admin login
  * /admin/dashboard           Admin dashboard
  * /admin/users               Admin user management
  * /admin/results             Admin results
@@ -29,7 +28,8 @@
  * DELETE /api/users/:uid         (admin)
  * GET    /api/results            (admin)
  * GET    /api/results/:id        (auth — own result only, or admin)
- * POST   /api/results            (auth)
+ * POST   /api/results            (auth — upserts by quizId+userId)
+ * DELETE /api/results/:id        (admin)
  * GET    /api/stats              (admin)
  * POST   /api/generate           (auth)
  * GET    /api/quizzes/public     (public — paginated metadata)
@@ -141,7 +141,21 @@ async function listUsers(kv) {
 }
 
 /* ── Results ── */
-async function saveResult(kv, r) {
+async function upsertResult(kv, r) {
+    // Check if this user already has a result for this quizId
+    if (r.quizId) {
+        const userResultIds = await kvGet(kv, `results:user:${r.userId}`) || [];
+        for (const rid of userResultIds) {
+            const existing = await kvGet(kv, `result:id:${rid}`);
+            if (existing && existing.quizId === r.quizId) {
+                // Update in-place — keep same resultId, update fields
+                const updated = { ...existing, ...r, resultId: existing.resultId, createdAt: new Date().toISOString() };
+                await kvSet(kv, `result:id:${existing.resultId}`, updated);
+                return updated;
+            }
+        }
+    }
+    // No existing record — insert fresh
     await kvSet(kv, `result:id:${r.resultId}`, r);
     let gi = await kvGet(kv, 'results:index') || [];
     gi.push(r.resultId);
@@ -150,6 +164,21 @@ async function saveResult(kv, r) {
     let ui = await kvGet(kv, `results:user:${r.userId}`) || [];
     ui.push(r.resultId);
     await kvSet(kv, `results:user:${r.userId}`, ui);
+    return r;
+}
+async function deleteResult(kv, resultId) {
+    const r = await kvGet(kv, `result:id:${resultId}`);
+    if (!r) return false;
+    await kvDel(kv, `result:id:${resultId}`);
+    // Remove from global index
+    const gi = (await kvGet(kv, 'results:index') || []).filter(id => id !== resultId);
+    await kvSet(kv, 'results:index', gi);
+    // Remove from user index
+    if (r.userId) {
+        const ui = (await kvGet(kv, `results:user:${r.userId}`) || []).filter(id => id !== resultId);
+        await kvSet(kv, `results:user:${r.userId}`, ui);
+    }
+    return true;
 }
 async function listResults(kv, limit = 200) {
     const idx = (await kvGet(kv, 'results:index') || []).slice(-limit).reverse();
@@ -414,9 +443,15 @@ async function routeSaveResult(req, env) {
         timeTaken:b.timeTaken||'', createdAt:new Date().toISOString(),
         answers:b.answers||[], quizId:b.quizId||null, quizSource:b.quizSource||null
     };
-    await saveResult(env.KV_STORE, r);
+    const saved = await upsertResult(env.KV_STORE, r);
     if (r.quizId) await addUserQuiz(env.KV_STORE, u.uid, r.quizId);
-    return ok({ok:true, resultId:r.resultId, path:`/quizzes/${r.quizId}/results?uid=${u.uid}`}, 201);
+    return ok({ok:true, resultId:saved.resultId, path:`/quizzes/${saved.quizId}/results?uid=${u.uid}`}, 201);
+}
+async function routeDeleteResult(req, env, id) {
+    if (!await authAdmin(req,env)) return bad('Unauthorized',401);
+    const deleted = await deleteResult(env.KV_STORE, id);
+    if (!deleted) return bad('Not found',404);
+    return ok({ok:true});
 }
 
 async function routeStats(req, env) {
@@ -566,9 +601,10 @@ async function routeGetQuiz(req, env, id) {
 function isSpaRoute(p) {
     if ([
         '/',
-        '/user/account', '/user/dashboard', '/user/topics',
+        '/account', '/user/account', '/admin/account',  // unified login + legacy compat
+        '/user/dashboard', '/user/topics',
         '/quizzes', '/quizzes/create',
-        '/admin/account', '/admin/dashboard', '/admin/users', '/admin/results', '/admin/quizzes',
+        '/admin/dashboard', '/admin/users', '/admin/results', '/admin/quizzes',
     ].includes(p)) return true;
     if (/^\/quizzes\/[^/]+$/.test(p)) return true;           // /quizzes/:id
     if (/^\/quizzes\/[^/]+\/results$/.test(p)) return true;  // /quizzes/:id/results
@@ -607,7 +643,8 @@ export default {
         if (p === '/api/results'        && m==='GET')  return routeListResults(request, env);
         if (p === '/api/results'        && m==='POST') return routeSaveResult(request, env);
         const rm = p.match(/^\/api\/results\/([^/]+)$/);
-        if (rm && m==='GET') return routeGetResult(request, env, rm[1]);
+        if (rm && m==='GET')    return routeGetResult(request, env, rm[1]);
+        if (rm && m==='DELETE') return routeDeleteResult(request, env, rm[1]);
 
         if (p === '/api/stats'          && m==='GET')  return routeStats(request, env);
         if (p === '/api/generate'       && m==='POST') return routeGenerate(request, env);
