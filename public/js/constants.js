@@ -1,0 +1,163 @@
+/* ── Professions ── */
+    const PROFESSIONS = [
+      { id: "LEC-URD-17", label_en: "Lecturer Urdu", label_ur: "لیکچرر اردو", icon: "fa-solid fa-book-open", lang: "ur", concepts: ["اردو زبان کی تاریخ", "اردو لسانیات", "قواعد اردو", "اردو شاعری", "اہم شعرا", "اردو نثر", "اہم نثر نگار", "اردو ناول", "اردو افسانہ", "اردو ڈراما", "ادبی تحریکیں", "ادبی تنقید", "بدیعیات اور بیان", "اردو تحقیق", "ترجمہ نگاری", "اردو صحافت", "تدریسی طریقہ کار"] },
+      { id: "LEC-ENG-17", label_en: "Lecturer English", label_ur: "لیکچرر انگریزی", icon: "fa-solid fa-spell-check", lang: "en", concepts: ["Basic Structure of English Language", "Tenses", "Voice and Narration", "Articles and Determiners", "Punctuation", "Vocabulary", "Comprehension and Writing Skills", "Précis and Summary Writing", "History of English Language", "History of English Literature", "Poetry", "Major English Poets", "Drama", "Major Dramatists", "Novel", "Major Novelists", "Short Story", "Literary Terms", "Literary Criticism", "Research and Academic Writing", "Teaching Methodology"] },
+      { id: "LEC-ISL-17", label_en: "Lecturer Islamic Studies", label_ur: "لیکچرر اسلامیات", icon: "fa-solid fa-moon", lang: "ur", concepts: ["اسلامی تعلیمات کا تعارف", "عقائد اسلام", "قرآن مجید", "احادیث نبوی", "سیرت النبی ﷺ", "خلفائے راشدین", "اسلامی عبادات", "اسلامی قانون (شریعت)", "فقہ اسلامی", "اسلامی معاشرت", "اسلامی معیشت", "اسلامی سیاست", "اسلامی تہذیب و تمدن", "اسلامی تاریخ", "اسلام اور جدید دنیا", "تحقیق اور اسلامی علوم"] },
+      { id: "LEC-PAK-17", label_en: "Lecturer Pakistan Studies", label_ur: "لیکچرر مطالعہ پاکستان", icon: "fa-solid fa-flag", lang: "ur", concepts: ["Introduction to Pakistan Studies", "Ideology of Pakistan", "Muslim Rule in Subcontinent", "Socio Religious Reform Movements", "Pakistan Movement", "Role of Important Personalities", "Constitutional Development", "Political Development", "Administrative Structure", "Foreign Policy", "Economy", "Natural Resources", "Geography", "Population", "Culture", "Education System", "Defence", "Current Affairs", "Kashmir Issue"] },
+      { id: "LEC-ARA-17", label_en: "Lecturer Arabic", label_ur: "لیکچرر عربی", icon: "fa-solid fa-star-and-crescent", lang: "ur", concepts: ["Arabic Language Basics", "Arabic Grammar", "Arabic Lexicography", "Classical Arabic Literature", "Quranic Arabic", "Arabic Poetry", "Arabic Prose", "Translation", "Islamic Studies in Arabic Context", "Arabic Composition", "Teaching Methodology"] },
+      { id: "LEC-PER-17", label_en: "Lecturer Persian", label_ur: "لیکچرر فارسی", icon: "fa-solid fa-feather-pointed", lang: "ur", concepts: ["Persian Language Basics", "Persian Grammar", "Persian Lexicography", "Classical Persian Literature", "Modern Persian Literature", "Persian Poetry", "Persian Prose", "Translation", "Teaching Methodology"] },
+      { id: "LEC-HIS-17", label_en: "Lecturer History", label_ur: "لیکچرر تاریخ", icon: "fa-solid fa-landmark", lang: "en", concepts: ["History of Subcontinent", "Islamic Rule in Subcontinent", "British Rule in India", "Muslim Political Movement", "Pakistan Movement", "History of Pakistan", "World History", "Kashmir History", "Historical Methods and Research"] },
+      { id: "LEC-POL-17", label_en: "Lecturer Political Science", label_ur: "لیکچرر سیاسیات", icon: "fa-solid fa-scale-balanced", lang: "en", concepts: ["Introduction to Political Science", "Political Theories", "Constitutional Government", "Democracy and Dictatorship", "Public Administration", "International Relations", "Pakistan Political System", "Electoral System and Political Parties", "Public Policy and Governance", "International Organizations", "Kashmir Issue"] },
+      { id: "LEC-ECO-17", label_en: "Lecturer Economics", label_ur: "لیکچرر معاشیات", icon: "fa-solid fa-chart-line", lang: "en", concepts: ["Introduction to Economics", "Theory of Demand", "Theory of Supply", "Consumer Behavior", "Production and Cost", "Market Structures", "Factor Prices", "Macroeconomics", "Money and Banking", "Public Finance", "International Economics", "Development Economics", "Economic Planning", "Kashmir Economy"] },
+      { id: "LEC-EDU-17", label_en: "Lecturer Education", label_ur: "لیکچرر تعلیم", icon: "fa-solid fa-school", lang: "en", concepts: ["Introduction to Education", "Educational Philosophies", "Educational Psychology", "Teaching Methods and Strategies", "Curriculum Development", "Educational Evaluation and Assessment", "Educational Research", "Educational Technology", "Special Education", "Educational Legislation and Policy"] },
+      { id: "LEC-PHY-17", label_en: "Lecturer Physics", label_ur: "لیکچرر طبیعیات", icon: "fa-solid fa-atom", lang: "en", concepts: ["Mechanics", "Properties of Matter", "Thermodynamics", "Waves and Oscillations", "Optics", "Electricity and Magnetism", "Modern Physics", "Instrumentation and Measurement", "Experiments"] },
+      { id: "LEC-CHEM-17", label_en: "Lecturer Chemistry", label_ur: "لیکچرر کیمیا", icon: "fa-solid fa-flask", lang: "en", concepts: ["General Chemistry", "Physical Chemistry", "Inorganic Chemistry", "Organic Chemistry", "Analytical Chemistry", "Industrial Chemistry", "Experimental Chemistry"] },
+      { id: "LEC-MATH-17", label_en: "Lecturer Mathematics", label_ur: "لیکچرر ریاضی", icon: "fa-solid fa-square-root-variable", lang: "en", concepts: ["Algebra", "Calculus", "Analytic Geometry", "Linear Algebra", "Trigonometry", "Differential Equations", "Probability and Statistics", "Numerical Methods"] },
+      { id: "LEC-CS-17", label_en: "Lecturer Computer Science", label_ur: "لیکچرر کمپیوٹر سائنس", icon: "fa-solid fa-laptop-code", lang: "en", concepts: ["Introduction to Computer Science", "Computer Hardware", "Computer Software", "Programming Fundamentals", "Data Structures", "Database Management Systems (DBMS)", "Operating Systems", "Networking and Internet", "Web Technologies", "Software Engineering", "Artificial Intelligence & Data Science"] },
+      { id: "LEC-BOT-17", label_en: "Lecturer Botany", label_ur: "لیکچرر نباتیات", icon: "fa-solid fa-seedling", lang: "en", concepts: ["Introduction to Botany", "Plant Taxonomy", "Plant Anatomy", "Plant Physiology", "Genetics", "Plant Ecology", "Plant Morphology", "Plant Pathology", "Plant Biotechnology", "Experimental Botany"] },
+      { id: "LEC-ZOO-17", label_en: "Lecturer Zoology", label_ur: "لیکچرر حیوانیات", icon: "fa-solid fa-paw", lang: "en", concepts: ["Introduction to Zoology", "Animal Classification", "Animal Anatomy and Physiology", "Genetics and Evolution", "Developmental Biology", "Ecology and Environmental Biology", "Immunology", "Microbiology and Parasitology", "Animal Behavior", "Experimental Zoology"] },
+      { id: "LEC-STAT-17", label_en: "Lecturer Statistics", label_ur: "لیکچرر شماریات", icon: "fa-solid fa-chart-bar", lang: "en", concepts: ["Introduction to Statistics", "Descriptive Statistics", "Probability Theory", "Random Variables", "Probability Distributions", "Sampling Theory", "Estimation and Hypothesis Testing", "Correlation and Regression", "Analysis of Variance (ANOVA)", "Time Series and Index Numbers", "Statistical Quality Control"] },
+      { id: "LEC-GEO-17", label_en: "Lecturer Geography", label_ur: "لیکچرر جغرافیہ", icon: "fa-solid fa-earth-asia", lang: "en", concepts: ["Introduction to Geography", "Physical Geography", "Climatology", "Biogeography", "Human Geography", "Regional Geography", "Geographic Techniques and Maps", "Environmental Geography"] },
+      { id: "LEC-COM-17", label_en: "Lecturer Commerce", label_ur: "لیکچرر تجارت", icon: "fa-solid fa-briefcase", lang: "en", concepts: ["Introduction to Commerce", "Business Organization", "Accounting and Financial Management", "Marketing and Sales Management", "Economics for Business", "Business Law and Ethics", "Banking and Insurance", "International Business and Trade", "Entrepreneurship and Management"] },
+    ];
+    const PROF_MAP = Object.fromEntries(PROFESSIONS.map(p => [p.id, p]));
+
+    /* ── Translations ── */
+    const T = {
+      en: {
+        brand_name: "AJK PSC Prep", brand_sub: "Exam Platform",
+        login_title: "Welcome Back", login_sub: "Sign in to your exam account",
+        login_email: "Email Address", login_pass: "Password", login_btn: "Sign In",
+        err_invalid: "Invalid email or password", err_expired: "Account expired. Contact administrator.",
+        err_generic: "Login failed. Please try again.",
+        choose_topic: "Choose Your Exam", choose_desc: "Select a topic to start your practice session.",
+        locked: "Not in your plan",
+        configure: "Configure Assessment", configure_desc: "Select the number of questions for your session.",
+        q_of: "Question {n} of {total}", submit_quiz: "Submit Quiz",
+        answered_of: "{n} of {total} answered",
+        pass_title: "Assessment Passed", fail_title: "Assessment Complete",
+        verdict_pass: "✓ Passed", verdict_fail: "✗ Did not pass",
+        correct: "Correct", incorrect: "Incorrect", skipped: "Skipped",
+        review: "Detailed Review", new_assessment: "New Assessment",
+        candidate: "Candidate Details", name: "Name", email: "Email",
+        questions: "Questions", answered: "Answered", score: "Score", result: "Result",
+        pass: "Pass", fail: "Fail", threshold: "Passing threshold 60%",
+        generating: "Generating Quiz…", generating_sub: "AI is creating personalised questions for you.",
+        back: "Back", next: "Next", submit: "Submit", cancel: "Cancel", confirm: "Confirm",
+        unanswered: "You have {n} unanswered questions.",
+        unanswered_tip: "Answer all questions for the best result.",
+        submit_anyway: "Submit Anyway", review_unanswered: "Review Unanswered",
+        your_answer: "Your answer", correct_answer: "Correct answer",
+        count_label: "Number of Questions",
+        count_info: "Larger quizzes take slightly longer. AI generates unique questions every time.",
+        generate: "Generate Quiz",
+        admin_dash: "Dashboard", admin_users: "Users", admin_results: "Results",
+        add_user: "Add User", edit_user: "Edit User", save: "Save", delete: "Delete",
+        confirm_delete: "Confirm Delete", logout: "Logout",
+        total_users: "Total Users", active_users: "Active Users",
+        total_results: "Total Results", avg_score: "Avg Score",
+        user_name: "Name", user_email: "Email", user_phone: "Phone",
+        user_start: "Start Date", user_expiry: "Expiry Date",
+        user_topics: "Topics", user_notes: "Notes", user_pass: "Password",
+        user_status: "Status", user_actions: "Actions",
+        no_users: "No users yet.", no_results: "No results yet.",
+        status_active: "Active", status_expired: "Expired", status_soon: "Expiring soon",
+        time: "Time", quiz_id: "Quiz ID", preview_quiz: "Preview Quiz", quiz_cached: "Using saved quiz (AI unavailable).",
+      },
+      ur: {
+        brand_name: "اے جے کے پی ایس سی", brand_sub: "امتحان پلیٹ فارم",
+        login_title: "خوش آمدید", login_sub: "اپنے امتحان اکاؤنٹ میں سائن ان کریں",
+        login_email: "ای میل پتہ", login_pass: "پاس ورڈ", login_btn: "سائن ان",
+        err_invalid: "ای میل یا پاس ورڈ غلط ہے", err_expired: "اکاؤنٹ ختم ہو گیا۔ منتظم سے رابطہ کریں۔",
+        err_generic: "لاگ ان ناکام ہوا۔ دوبارہ کوشش کریں۔",
+        choose_topic: "اپنا امتحان منتخب کریں", choose_desc: "مشق شروع کرنے کے لیے موضوع منتخب کریں۔",
+        locked: "آپ کے پلان میں شامل نہیں",
+        configure: "تشخیص ترتیب دیں", configure_desc: "اپنے سیشن کے لیے سوالات کی تعداد منتخب کریں۔",
+        q_of: "سوال {n} از {total}", submit_quiz: "کوئز جمع کریں",
+        answered_of: "{n} از {total} جواب دیے",
+        pass_title: "تشخیص کامیاب", fail_title: "تشخیص مکمل",
+        verdict_pass: "✓ پاس", verdict_fail: "✗ پاس نہیں",
+        correct: "درست", incorrect: "غلط", skipped: "چھوڑا",
+        review: "تفصیلی جائزہ", new_assessment: "نئی تشخیص",
+        candidate: "امیدوار کی تفصیلات", name: "نام", email: "ای میل",
+        questions: "سوالات", answered: "جواب دیے", score: "اسکور", result: "نتیجہ",
+        pass: "پاس", fail: "فیل", threshold: "پاسنگ حد ۶۰٪",
+        generating: "کوئز بن رہا ہے…", generating_sub: "AI آپ کے لیے ذاتی سوالات بنا رہا ہے۔",
+        back: "واپس", next: "اگلا", submit: "جمع کریں", cancel: "منسوخ", confirm: "تصدیق",
+        unanswered: "آپ کے {n} سوالات کا جواب نہیں دیا گیا۔",
+        unanswered_tip: "بہترین نتیجے کے لیے تمام سوالات کا جواب دیں۔",
+        submit_anyway: "پھر بھی جمع کریں", review_unanswered: "جواب نہ دیے سوالات دیکھیں",
+        your_answer: "آپ کا جواب", correct_answer: "درست جواب",
+        count_label: "سوالات کی تعداد",
+        count_info: "بڑے کوئز میں تھوڑا زیادہ وقت لگتا ہے۔ AI ہر بار منفرد سوالات تیار کرتا ہے۔",
+        generate: "کوئز بنائیں",
+        admin_dash: "ڈیش بورڈ", admin_users: "صارفین", admin_results: "نتائج",
+        add_user: "صارف شامل کریں", edit_user: "صارف ترمیم کریں", save: "محفوظ کریں", delete: "حذف کریں",
+        confirm_delete: "حذف کی تصدیق", logout: "لاگ آؤٹ",
+        total_users: "کل صارفین", active_users: "فعال صارفین",
+        total_results: "کل نتائج", avg_score: "اوسط اسکور",
+        user_name: "نام", user_email: "ای میل", user_phone: "فون",
+        user_start: "شروع کی تاریخ", user_expiry: "ختم کی تاریخ",
+        user_topics: "موضوعات", user_notes: "نوٹس", user_pass: "پاس ورڈ",
+        user_status: "حیثیت", user_actions: "عمل",
+        no_users: "ابھی کوئی صارف نہیں۔", no_results: "ابھی کوئی نتائج نہیں۔",
+        status_active: "فعال", status_expired: "ختم", status_soon: "جلد ختم",
+        time: "وقت", quiz_id: "کوئز آئی ڈی", preview_quiz: "کوئز معائنہ", quiz_cached: "AI دستیاب نہیں، محفوظ کوئز استعمال ہوا۔",
+      }
+    };
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       STATE
+    ═══════════════════════════════════════════════════════════════════════ */
+    let lang = 'en';
+    let authToken = sessionStorage.getItem('psc_token') || null;
+    let currentUser = null;
+    try { currentUser = JSON.parse(sessionStorage.getItem('psc_user')); } catch { }
+    let profession = null;
+    let quiz = null;
+    let answers = {};
+    let qIdx = 0;
+    let qCount = 30;
+    let currentQuizId = null;
+    let currentQuizSource = null;
+    let startTime = null;
+    let timerID = null;
+    let adminTab = 'dashboard';
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       EXTEND TRANSLATIONS
+    ═══════════════════════════════════════════════════════════════════════ */
+    Object.assign(T.en, {
+      admin_quizzes: 'Quiz Library',
+      nav_quizzes: 'Quiz Library', nav_topics: 'My Topics', nav_dashboard: 'Dashboard',
+      landing_signin: 'Sign In', landing_register: 'Register Interest',
+      landing_hero: 'AI-Powered Exam<br>Preparation Platform',
+      landing_sub: 'Prepare for AJK PSC exams with intelligent, topic-specific practice quizzes generated by advanced AI.',
+      landing_contact_title: 'Register & Contact',
+      landing_contact_whatsapp: 'WhatsApp / Call',
+      landing_contact_note: 'Contact us to register your account or inquire about topics.',
+      quiz_lib_title: 'Quiz Library', quiz_lib_sub: 'Browse all practice quizzes available on the platform.',
+      quiz_attempt_title: 'Quiz Attempt', share_result: 'Share Result',
+      copy_link: 'Copy Link', link_copied: 'Link copied!',
+      result_shareable: 'Shareable result link',
+      user_dashboard: 'Dashboard', my_topics: 'My Topics',
+      recent_activity: 'Recent Activity', no_activity: 'No activity yet. Start a quiz to see results here.',
+      quiz_source_ai: 'AI Generated', quiz_source_cache: 'Cached Quiz',
+    });
+    Object.assign(T.ur, {
+      admin_quizzes: 'کوئز لائبریری',
+      nav_quizzes: 'کوئز لائبریری', nav_topics: 'میرے موضوعات', nav_dashboard: 'ڈیش بورڈ',
+      landing_signin: 'سائن ان', landing_register: 'رجسٹریشن',
+      landing_hero: 'AI سے چلنے والا<br>امتحان تیاری پلیٹ فارم',
+      landing_sub: 'AJK PSC امتحانات کی تیاری کریں ذہین اور موضوع کے مطابق پریکٹس کوئزز کے ساتھ۔',
+      landing_contact_title: 'رجسٹریشن اور رابطہ',
+      landing_contact_whatsapp: 'واٹس ایپ / کال',
+      landing_contact_note: 'اکاؤنٹ رجسٹر کرنے یا موضوعات کے بارے میں پوچھنے کے لیے ہم سے رابطہ کریں۔',
+      quiz_lib_title: 'کوئز لائبریری', quiz_lib_sub: 'پلیٹ فارم پر دستیاب تمام پریکٹس کوئزز دیکھیں۔',
+      quiz_attempt_title: 'کوئز', share_result: 'نتیجہ شیئر کریں',
+      copy_link: 'لنک کاپی کریں', link_copied: 'لنک کاپی ہو گیا!',
+      result_shareable: 'شیئر کے قابل نتیجہ لنک',
+      user_dashboard: 'ڈیش بورڈ', my_topics: 'میرے موضوعات',
+      recent_activity: 'حالیہ سرگرمی', no_activity: 'ابھی کوئی سرگرمی نہیں۔ نتائج دیکھنے کے لیے کوئز شروع کریں۔',
+      quiz_source_ai: 'AI سے تیار', quiz_source_cache: 'محفوظ کوئز',
+    });
