@@ -1,6 +1,6 @@
 name = "quiz-backend"
 main = "src/index.js"
-compatibility_date = "2024-03-07"
+compatibility_date = "2024-09-23"
 
 [assets]
 directory = "public"
@@ -9,3 +9,11 @@ binding = "ASSETS"
 [[kv_namespaces]]
 binding = "KV_STORE"
 id = "8fc9e78e260d40f09d2eb93aab58ab11"
+
+# ─── Secrets — set with: wrangler secret put <NAME> ───────────────────────
+# GEMINI_API_KEY       — Gemini AI (primary quiz generator)
+# GROQ_API_KEY         — Groq / Llama (fallback)
+# CEREBRAS_API_KEY     — Cerebras / Llama (fallback)
+# JWT_SECRET           — Token signing secret (generate a long random string)
+# ADMIN_EMAIL          — Admin login email   (default: admin@psc.ajk)
+# ADMIN_PASSWORD       — Admin password      (default: Admin@PSC2024!)
