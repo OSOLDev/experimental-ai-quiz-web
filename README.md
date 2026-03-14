@@ -75,36 +75,36 @@ An AI-powered exam preparation platform for AJK Public Service Commission exams,
 ## 📁 Project Structure
 
 ```
-backend/
-├── public/                     # Frontend static assets
-│   ├── index.html              # Main HTML entry point (imports all assets)
+ai_quiz_project/
+├── public/                          # Frontend static assets (served by Cloudflare)
+│   ├── index.html                   # Main HTML entry point (imports all assets)
 │   ├── styles/
-│   │   └── main.css            # All application styles (~106KB)
+│   │   └── main.css                 # All application styles (~106KB)
 │   └── js/
-│       ├── constants.js        # Professions data and translations (~19KB)
-│       ├── state.js            # Application state variables
-│       ├── helpers.js          # Utility functions (markdown, math, etc.)
-│       ├── router.js           # SPA routing with History API
-│       ├── app.js              # Main entry point
-│       └── render/             # Page render functions
-│           ├── landing.js      # Landing page
-│           ├── login.js        # Login/authentication page
-│           ├── user-dashboard.js  # User dashboard
-│           ├── topics.js       # Topic selection page
-│           ├── quiz-attempt.js # Quiz taking interface
-│           ├── result.js       # Results display
-│           └── admin.js        # Admin panel (users, results, quizzes)
+│       ├── constants.js             # Professions data and translations (~19KB)
+│       ├── state.js                 # Application state variables
+│       ├── helpers.js               # Utility functions (markdown, math, sanitization)
+│       ├── router.js                # SPA routing with History API
+│       ├── app.js                   # Main entry point
+│       └── render/                  # Page render functions
+│           ├── landing.js           # Landing page
+│           ├── login.js             # Login/authentication page
+│           ├── user-dashboard.js    # User dashboard
+│           ├── topics.js            # Topic selection + configure quiz
+│           ├── quiz-attempt.js      # Quiz taking interface
+│           ├── result.js            # Results display + review
+│           └── admin.js             # Admin panel (dashboard, users, results, quizzes)
 │
 ├── src/
-│   └── index.js                # Cloudflare Worker backend (~675 lines)
-│                               # - API route handlers
-│                               # - Authentication middleware
-│                               # - KV data operations
-│                               # - AI model integration
+│   └── index.js                     # Cloudflare Worker backend (~675 lines)
+│                                    #   - API route handlers
+│                                    #   - Authentication middleware
+│                                    #   - KV data operations
+│                                    #   - AI model integration
 │
-├── wrangler.toml               # Cloudflare Workers configuration
-├── .gitignore                  # Git ignore rules
-└── README.md                   # This file
+├── wrangler.toml                    # Cloudflare Workers configuration
+├── .gitignore                       # Git ignore rules
+└── README.md                        # Project documentation
 ```
 
 ## ✨ Features
