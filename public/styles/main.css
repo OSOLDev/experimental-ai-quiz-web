@@ -722,9 +722,93 @@
       box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
     }
 
+    .password-toggle {
+      position: absolute;
+      inset-inline-end: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--fg-subtle);
+      transition: color 120ms;
+      z-index: 10;
+    }
+
+    .password-toggle:hover {
+      color: var(--fg);
+    }
+
+    .field-input.has-icon-end {
+      padding-inline-end: 40px;
+    }
+
     .field-input.invalid {
       border-color: var(--error);
     }
+
+    /* Cognitive Level Badges */
+    .badge-cognitive {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .badge-knowledge { background: hsla(210, 100%, 50%, 0.1); color: hsl(210, 100%, 45%); border: 1px solid hsla(210, 100%, 50%, 0.2); }
+    .badge-understanding { background: hsla(280, 100%, 50%, 0.1); color: hsl(280, 100%, 45%); border: 1px solid hsla(280, 100%, 50%, 0.2); }
+    .badge-application { background: hsla(30, 100%, 50%, 0.1); color: hsl(30, 100%, 45%); border: 1px solid hsla(30, 100%, 50%, 0.2); }
+
+    /* AI Tutor Explanation Box */
+    .explanation-box {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .explanation-box.open { display: block; }
+    .explanation-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--accent);
+      font-size: 12px;
+    }
+    .explanation-text {
+      color: var(--fg-muted);
+      line-height: 1.5;
+    }
+    .tutor-toggle-btn {
+      margin-top: 8px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .tutor-toggle-btn:hover {
+      background: var(--accent-subtle);
+      border-color: var(--accent-border);
+    }
+
 
     .field-error {
       font-size: 12px;
@@ -3158,35 +3242,29 @@
     .landing-hero-section {
       position: relative;
       overflow: hidden;
-      background: linear-gradient(160deg,
-        hsl(142.1 76.2% 12%) 0%,
-        hsl(142.1 76.2% 18%) 40%,
-        hsl(150 60% 22%) 100%);
-      padding: 52px var(--p-x) 56px;
+      background-image: url('../images/hero-bg.jpg');
+      background-size: cover;
+      background-position: center;
+      padding: 60px var(--p-x) 64px;
+      min-height: 80dvh;
+      display: flex;
+      align-items: center;
     }
 
     @media (min-width: 768px) {
       .landing-hero-section {
-        padding: 72px 32px 80px;
+        padding: 100px 32px 120px;
+        min-height: 600px;
       }
     }
 
-    @media (min-width: 1024px) {
-      .landing-hero-section {
-        padding: 96px 32px 100px;
-      }
-    }
-
-    /* Decorative grid pattern overlay */
+    /* Dark Overlay for better text readability */
     .landing-hero-section::before {
       content: '';
       position: absolute;
       inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
+      background: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.7) 100%);
+      z-index: 1;
     }
 
     /* Glowing circle decoration */
@@ -3197,8 +3275,9 @@
       right: -120px;
       width: 500px;
       height: 500px;
-      background: radial-gradient(circle, hsl(142.1 76.2% 36.3% / 0.18) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
       pointer-events: none;
+      z-index: 1;
     }
 
     .landing-hero-inner {

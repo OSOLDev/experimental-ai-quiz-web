@@ -287,8 +287,14 @@ async function callLLM(provider, model, prompt, env) {
             generationConfig:{
                 responseMimeType:'application/json',
                 responseSchema:{type:'OBJECT',properties:{questions:{type:'ARRAY',items:{type:'OBJECT',
-                    properties:{question:{type:'STRING'},options:{type:'ARRAY',items:{type:'STRING'}},correctAnswer:{type:'STRING'}},
-                    required:['question','options','correctAnswer']}}},required:['questions']}
+                    properties:{
+                        question:{type:'STRING'},
+                        options:{type:'ARRAY',items:{type:'STRING'}},
+                        correctAnswer:{type:'STRING'},
+                        explanation:{type:'STRING'},
+                        cognitiveLevel:{type:'STRING',enum:['Knowledge','Understanding','Application']}
+                    },
+                    required:['question','options','correctAnswer','explanation','cognitiveLevel']}}},required:['questions']}
             }
         };
         const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${k}`,
@@ -380,6 +386,16 @@ async function routeCreateUser(req, env) {
         passwordHash:await hashPassword(password),
         phone:phone||'', startDate:startDate||new Date().toISOString().slice(0,10),
         expiryDate, topics:topics||[], additionalNotes:additionalNotes||'',
+        notifications: [
+            {
+                id: qid(),
+                type: 'welcome',
+                title: 'Welcome to the Academy',
+                message: `Your account has been created successfully. Your login password is: ${password}`,
+                read: false,
+                createdAt: new Date().toISOString()
+            }
+        ],
         createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
     };
     await saveUser(env.KV_STORE, u);
@@ -477,19 +493,35 @@ async function routeGenerate(req, env) {
 Topic: ${topic}
 Concepts: ${concepts||topic}
 Language: ${lang||'English'}
+Target Level: BSc/MSc (High difficulty, AJKPSC Standard)
 
-Rules:
-- Write exactly ${count} multiple-choice questions at BSc/MSc level for government service exam.
+Cognitive Distribution Rules (CRITICAL):
+- 40% Knowledge based (Definitions, facts, core principles)
+- 30% Understanding based (Comparison, interpretation, conceptual depth)
+- 30% Application based (Problem solving, scenarios, calculations)
+
+General Rules:
+- Write exactly ${count} multiple-choice questions.
 - Distribute questions evenly across all listed concepts.
-- ${isUrdu?'Write ALL questions and options in Urdu Nastaliq script only.':'Write everything in English.'}
-- Each question has exactly 4 options.
+- ${isUrdu?'Write ALL questions, options, and explanations in Urdu Nastaliq script only.':'Write everything in English.'}
+- Each question must have exactly 4 options.
 - correctAnswer must be a byte-for-byte copy of one option string.
-- Vary question types: definition, application, analysis, comparison.
 - No option labels like A. B. C. D. in the options strings.
+- explanation: Provide a detailed "AI Tutor" style step-by-step explanation (2-3 sentences) explaining WHY the correct answer is right and why others are wrong.
 - For any mathematical expressions, use LaTeX wrapped in $...$ (inline) or $$...$$ (display).
 
 Return ONLY valid JSON, no markdown:
-{"questions":[{"question":"...","options":["...","...","...","..."],"correctAnswer":"..."}]}`;
+{
+  "questions": [
+    {
+      "question": "...",
+      "options": ["...", "...", "...", "..."],
+      "correctAnswer": "...",
+      "explanation": "...",
+      "cognitiveLevel": "Knowledge | Understanding | Application"
+    }
+  ]
+}`;
 
     try {
         const raw = await generate(prompt, env);
@@ -600,14 +632,15 @@ async function routeGetQuiz(req, env, id) {
 /* All SPA page paths — served as index.html */
 function isSpaRoute(p) {
     if ([
-        '/',
-        '/account', '/user/account', '/admin/account',  // unified login + legacy compat
-        '/user/dashboard', '/user/topics',
-        '/quizzes', '/quizzes/create',
-        '/admin/dashboard', '/admin/users', '/admin/results', '/admin/quizzes',
+        '/', '/login',
+        '/dashboard', '/topics',
+        '/quizzes',
+        '/admin', '/admin/users', '/admin/results', '/admin/quizzes',
     ].includes(p)) return true;
-    if (/^\/quizzes\/[^/]+$/.test(p)) return true;           // /quizzes/:id
-    if (/^\/quizzes\/[^/]+\/results$/.test(p)) return true;  // /quizzes/:id/results
+    if (/^\/topics\/[^/]+$/.test(p)) return true; // /topics/:id
+    if (/^\/topics\/[^/]+\/[^/]+$/.test(p)) return true; // /topics/:id/:id
+    if (/^\/quiz\/[^/]+$/.test(p)) return true; // /quiz/:id
+    if (/^\/result\/[^/]+$/.test(p)) return true; // /result/:id
     return false;
 }
 

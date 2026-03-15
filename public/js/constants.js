@@ -1,5 +1,5 @@
 /* ── Professions ── */
-    const PROFESSIONS = [
+export const PROFESSIONS = [
       { id: "LEC-URD-17", label_en: "Lecturer Urdu", label_ur: "لیکچرر اردو", icon: "fa-solid fa-book-open", lang: "ur", concepts: ["اردو زبان کی تاریخ", "اردو لسانیات", "قواعد اردو", "اردو شاعری", "اہم شعرا", "اردو نثر", "اہم نثر نگار", "اردو ناول", "اردو افسانہ", "اردو ڈراما", "ادبی تحریکیں", "ادبی تنقید", "بدیعیات اور بیان", "اردو تحقیق", "ترجمہ نگاری", "اردو صحافت", "تدریسی طریقہ کار"] },
       { id: "LEC-ENG-17", label_en: "Lecturer English", label_ur: "لیکچرر انگریزی", icon: "fa-solid fa-spell-check", lang: "en", concepts: ["Basic Structure of English Language", "Tenses", "Voice and Narration", "Articles and Determiners", "Punctuation", "Vocabulary", "Comprehension and Writing Skills", "Précis and Summary Writing", "History of English Language", "History of English Literature", "Poetry", "Major English Poets", "Drama", "Major Dramatists", "Novel", "Major Novelists", "Short Story", "Literary Terms", "Literary Criticism", "Research and Academic Writing", "Teaching Methodology"] },
       { id: "LEC-ISL-17", label_en: "Lecturer Islamic Studies", label_ur: "لیکچرر اسلامیات", icon: "fa-solid fa-moon", lang: "ur", concepts: ["اسلامی تعلیمات کا تعارف", "عقائد اسلام", "قرآن مجید", "احادیث نبوی", "سیرت النبی ﷺ", "خلفائے راشدین", "اسلامی عبادات", "اسلامی قانون (شریعت)", "فقہ اسلامی", "اسلامی معاشرت", "اسلامی معیشت", "اسلامی سیاست", "اسلامی تہذیب و تمدن", "اسلامی تاریخ", "اسلام اور جدید دنیا", "تحقیق اور اسلامی علوم"] },
@@ -19,11 +19,13 @@
       { id: "LEC-STAT-17", label_en: "Lecturer Statistics", label_ur: "لیکچرر شماریات", icon: "fa-solid fa-chart-bar", lang: "en", concepts: ["Introduction to Statistics", "Descriptive Statistics", "Probability Theory", "Random Variables", "Probability Distributions", "Sampling Theory", "Estimation and Hypothesis Testing", "Correlation and Regression", "Analysis of Variance (ANOVA)", "Time Series and Index Numbers", "Statistical Quality Control"] },
       { id: "LEC-GEO-17", label_en: "Lecturer Geography", label_ur: "لیکچرر جغرافیہ", icon: "fa-solid fa-earth-asia", lang: "en", concepts: ["Introduction to Geography", "Physical Geography", "Climatology", "Biogeography", "Human Geography", "Regional Geography", "Geographic Techniques and Maps", "Environmental Geography"] },
       { id: "LEC-COM-17", label_en: "Lecturer Commerce", label_ur: "لیکچرر تجارت", icon: "fa-solid fa-briefcase", lang: "en", concepts: ["Introduction to Commerce", "Business Organization", "Accounting and Financial Management", "Marketing and Sales Management", "Economics for Business", "Business Law and Ethics", "Banking and Insurance", "International Business and Trade", "Entrepreneurship and Management"] },
+      { id: "LEC-BIO-17", label_en: "Lecturer Biology", label_ur: "لیکچرر بیالوجی", icon: "fa-solid fa-microscope", lang: "en", concepts: ["Cell Biology", "Genetics & Evolution", "Molecular Biology", "Microbiology & Virology", "Botany (Plant Sciences)", "Zoology (Animal Sciences)", "Ecology & Environmental Biology", "Biotechnology", "Physiology & Anatomy", "Teaching Methodology"] },
+      { id: "AUD-17", label_en: "Senior Auditor", label_ur: "سینئر آڈیٹر", icon: "fa-solid fa-calculator", lang: "en", concepts: ["Principles of Accounting", "Financial Management", "Auditing Standards (ISA)", "Internal Audit & Control", "Commercial & Corporate Law", "Income Tax & Sales Tax Laws", "Public Financial Management", "Corporate Governance", "Audit Reporting", "Business Communication"] },
     ];
-    const PROF_MAP = Object.fromEntries(PROFESSIONS.map(p => [p.id, p]));
+export const PROF_MAP = Object.fromEntries(PROFESSIONS.map(p => [p.id, p]));
 
-    /* ── Translations ── */
-    const T = {
+/* ── Translations ── */
+export const T = {
       en: {
         brand_name: "AJK PSC Prep", brand_sub: "Exam Platform",
         login_title: "Welcome Back", login_sub: "Sign in to your exam account",
@@ -105,59 +107,3 @@
         time: "وقت", quiz_id: "کوئز آئی ڈی", preview_quiz: "کوئز معائنہ", quiz_cached: "AI دستیاب نہیں، محفوظ کوئز استعمال ہوا۔",
       }
     };
-
-    /* ═══════════════════════════════════════════════════════════════════════
-       STATE
-    ═══════════════════════════════════════════════════════════════════════ */
-    let lang = 'en';
-    let authToken = sessionStorage.getItem('psc_token') || null;
-    let currentUser = null;
-    try { currentUser = JSON.parse(sessionStorage.getItem('psc_user')); } catch { }
-    let profession = null;
-    let quiz = null;
-    let answers = {};
-    let qIdx = 0;
-    let qCount = 30;
-    let currentQuizId = null;
-    let currentQuizSource = null;
-    let startTime = null;
-    let timerID = null;
-    let adminTab = 'dashboard';
-
-    /* ═══════════════════════════════════════════════════════════════════════
-       EXTEND TRANSLATIONS
-    ═══════════════════════════════════════════════════════════════════════ */
-    Object.assign(T.en, {
-      admin_quizzes: 'Quiz Library',
-      nav_quizzes: 'Quiz Library', nav_topics: 'My Topics', nav_dashboard: 'Dashboard',
-      landing_signin: 'Sign In', landing_register: 'Register Interest',
-      landing_hero: 'AI-Powered Exam<br>Preparation Platform',
-      landing_sub: 'Prepare for AJK PSC exams with intelligent, topic-specific practice quizzes generated by advanced AI.',
-      landing_contact_title: 'Register & Contact',
-      landing_contact_whatsapp: 'WhatsApp / Call',
-      landing_contact_note: 'Contact us to register your account or inquire about topics.',
-      quiz_lib_title: 'Quiz Library', quiz_lib_sub: 'Browse all practice quizzes available on the platform.',
-      quiz_attempt_title: 'Quiz Attempt', share_result: 'Share Result',
-      copy_link: 'Copy Link', link_copied: 'Link copied!',
-      result_shareable: 'Shareable result link',
-      user_dashboard: 'Dashboard', my_topics: 'My Topics',
-      recent_activity: 'Recent Activity', no_activity: 'No activity yet. Start a quiz to see results here.',
-      quiz_source_ai: 'AI Generated', quiz_source_cache: 'Cached Quiz',
-    });
-    Object.assign(T.ur, {
-      admin_quizzes: 'کوئز لائبریری',
-      nav_quizzes: 'کوئز لائبریری', nav_topics: 'میرے موضوعات', nav_dashboard: 'ڈیش بورڈ',
-      landing_signin: 'سائن ان', landing_register: 'رجسٹریشن',
-      landing_hero: 'AI سے چلنے والا<br>امتحان تیاری پلیٹ فارم',
-      landing_sub: 'AJK PSC امتحانات کی تیاری کریں ذہین اور موضوع کے مطابق پریکٹس کوئزز کے ساتھ۔',
-      landing_contact_title: 'رجسٹریشن اور رابطہ',
-      landing_contact_whatsapp: 'واٹس ایپ / کال',
-      landing_contact_note: 'اکاؤنٹ رجسٹر کرنے یا موضوعات کے بارے میں پوچھنے کے لیے ہم سے رابطہ کریں۔',
-      quiz_lib_title: 'کوئز لائبریری', quiz_lib_sub: 'پلیٹ فارم پر دستیاب تمام پریکٹس کوئزز دیکھیں۔',
-      quiz_attempt_title: 'کوئز', share_result: 'نتیجہ شیئر کریں',
-      copy_link: 'لنک کاپی کریں', link_copied: 'لنک کاپی ہو گیا!',
-      result_shareable: 'شیئر کے قابل نتیجہ لنک',
-      user_dashboard: 'ڈیش بورڈ', my_topics: 'میرے موضوعات',
-      recent_activity: 'حالیہ سرگرمی', no_activity: 'ابھی کوئی سرگرمی نہیں۔ نتائج دیکھنے کے لیے کوئز شروع کریں۔',
-      quiz_source_ai: 'AI سے تیار', quiz_source_cache: 'محفوظ کوئز',
-    });

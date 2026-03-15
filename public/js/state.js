@@ -1,17 +1,25 @@
 /* ═══════════════════════════════════════════════════════════════════════
        STATE
     ═══════════════════════════════════════════════════════════════════════ */
-    let lang = 'en';
-    let authToken = sessionStorage.getItem('psc_token') || null;
-    let currentUser = null;
-    try { currentUser = JSON.parse(sessionStorage.getItem('psc_user')); } catch { }
-    let profession = null;
-    let quiz = null;
-    let answers = {};
-    let qIdx = 0;
-    let qCount = 30;
-    let currentQuizId = null;
-    let currentQuizSource = null;
-    let startTime = null;
-    let timerID = null;
-    let adminTab = 'dashboard';
+export const state = {
+  token: sessionStorage.getItem('psc_token') || null,          
+  user: null,           
+  uiLang: 'en',         
+  currentQuiz: null,    
+  currentProfessionId: null,  
+  _quizConfig: null,
+  answers: {},
+  qIdx: 0,
+  qCount: 30,
+  currentQuizId: null,
+  currentQuizSource: null,
+  startTime: null,
+  timerID: null,
+  adminTab: 'dashboard'
+};
+
+try { 
+  state.user = JSON.parse(sessionStorage.getItem('psc_user')); 
+} catch {
+  state.user = null;
+}

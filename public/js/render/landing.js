@@ -1,7 +1,11 @@
+import { state } from '../state.js';
+import { $, t, setP, setV } from '../helpers.js';
+import { go, toggleLang, toggleTheme } from '../router.js';
+
 /* ═══════════════════════════════════════════════════════════════════════
-       LANDING PAGE  /
-    ═══════════════════════════════════════════════════════════════════════ */
-    function renderLanding() {
+   LANDING PAGE  /
+═══════════════════════════════════════════════════════════════════════ */
+export function renderLanding() {
       setP(100);
       $('main-topbar').style.display = 'none'; // landing has its own nav
 
@@ -32,28 +36,28 @@
   <!-- ── NAV ── -->
   <nav class="landing-nav">
     <div class="landing-nav-inner">
-      <a class="brand" href="/" onclick="navigate(event,'/')">
+      <a class="brand" href="/" onclick="window._navigate(event,'/')">
         <div class="brand-mark"><i class="fa-solid fa-graduation-cap"></i></div>
         <div class="brand-text">
-          <span class="brand-name">AJK PSC Prep</span>
-          <span class="brand-sub">Exam Platform</span>
+          <span class="brand-name">${t('brand_name')}</span>
+          <span class="brand-sub">Career Excellence</span>
         </div>
       </a>
       <div class="landing-nav-links">
-        <button class="nav-link" onclick="go('/quizzes')">
+        <button class="nav-link" onclick="window._go('/quizzes')">
           <i class="fa-solid fa-book-open"></i> ${t('quiz_lib_title')}
         </button>
       </div>
       <div style="display:flex;gap:8px;align-items:center;margin-inline-start:auto">
-        <button class="lang-btn" onclick="toggleLang()">
-          <i class="fa-solid fa-language"></i><span>${lang === 'en' ? 'اردو' : 'EN'}</span>
+        <button class="lang-btn" onclick="window._toggleLang()">
+          <i class="fa-solid fa-language"></i><span>${state.uiLang === 'en' ? 'اردو' : 'EN'}</span>
         </button>
-        <button class="icon-btn" onclick="toggleTheme()"><i class="fa-solid fa-circle-half-stroke"></i></button>
-        ${currentUser
-          ? `<button class="btn btn-ghost btn-sm" onclick="go('/account')">
+        <button class="icon-btn" onclick="window._toggleTheme()"><i class="fa-solid fa-circle-half-stroke"></i></button>
+        ${state.user
+          ? `<button class="btn btn-ghost btn-sm" onclick="window._go('/login')">
                <i class="fa-solid fa-arrow-right-to-bracket"></i> ${t('landing_signin')}
              </button>`
-          : `<button class="btn btn-ghost btn-sm" onclick="go('/account')">
+          : `<button class="btn btn-ghost btn-sm" onclick="window._go('/login')">
                <i class="fa-solid fa-arrow-right-to-bracket"></i> ${t('landing_signin')}
              </button>`
         }
@@ -73,8 +77,8 @@
         </div>
 
         <h1 class="landing-headline">
-          Ace Your PSC Exam with<br>
-          <em>AI-Powered</em> Practice
+          <em>${t('brand_name')}</em><br>
+          Ace Your PSC Exam
         </h1>
 
         <p class="landing-sub">
@@ -82,10 +86,10 @@
         </p>
 
         <div class="landing-actions">
-          <button class="btn-landing-primary" onclick="go('/account')">
+          <button class="btn-landing-primary" onclick="window._go('/login')">
             <i class="fa-solid fa-arrow-right-to-bracket"></i> ${t('landing_signin')}
           </button>
-          <button class="btn-landing-ghost" onclick="go('/quizzes')">
+          <button class="btn-landing-ghost" onclick="window._go('/quizzes')">
             <i class="fa-solid fa-book-open"></i> Browse Quizzes
           </button>
         </div>
@@ -93,20 +97,20 @@
         <!-- Stats -->
         <div class="landing-stats-bar">
           <div class="landing-stat-item">
+            <div class="landing-stat-num">10+ Years</div>
+            <div class="landing-stat-label">Past Papers</div>
+          </div>
+          <div class="landing-stat-item">
+            <div class="landing-stat-num">50k+</div>
+            <div class="landing-stat-label">MCQs Data</div>
+          </div>
+          <div class="landing-stat-item">
             <div class="landing-stat-num">18+</div>
-            <div class="landing-stat-label">Exam Topics</div>
-          </div>
-          <div class="landing-stat-item">
-            <div class="landing-stat-num">AI</div>
-            <div class="landing-stat-label">Generated Qs</div>
-          </div>
-          <div class="landing-stat-item">
-            <div class="landing-stat-num">2</div>
-            <div class="landing-stat-label">Languages</div>
+            <div class="landing-stat-label">Subjects</div>
           </div>
           <div class="landing-stat-item">
             <div class="landing-stat-num">100%</div>
-            <div class="landing-stat-label">Unique Quizzes</div>
+            <div class="landing-stat-label">Authentic Content</div>
           </div>
         </div>
       </div>
@@ -119,7 +123,7 @@
         <p class="landing-signin-card-sub">${t('landing_contact_note')}</p>
 
         <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
-          <button class="btn btn-accent btn-full btn-lg" onclick="go('/account')">
+          <button class="btn btn-accent btn-full btn-lg" onclick="window._go('/login')">
             <i class="fa-solid fa-arrow-right-to-bracket"></i> ${t('landing_signin')}
           </button>
           <a href="https://wa.me/923428910567?text=Hello%2C%20I%20want%20to%20register%20for%20AJK%20PSC%20Exam%20Prep"
@@ -157,24 +161,24 @@
 
     <div class="landing-features-grid">
       <div class="landing-feat-card" style="animation-delay:0.05s">
-        <div class="landing-feat-card-icon"><i class="fa-solid fa-brain"></i></div>
-        <div class="landing-feat-card-title">AI-Generated Questions</div>
-        <div class="landing-feat-card-desc">Every quiz is freshly generated by advanced AI — no two sessions are the same.</div>
+        <div class="landing-feat-card-icon"><i class="fa-solid fa-file-lines"></i></div>
+        <div class="landing-feat-card-title">10+ Years of Past Papers</div>
+        <div class="landing-feat-card-desc">Access authentic AJK PSC past papers from the last decade to understand exam patterns.</div>
       </div>
       <div class="landing-feat-card" style="animation-delay:0.1s">
-        <div class="landing-feat-card-icon"><i class="fa-solid fa-language"></i></div>
-        <div class="landing-feat-card-title">Bilingual Support</div>
-        <div class="landing-feat-card-desc">Full English and Urdu support with right-to-left layout for Urdu-medium exams.</div>
+        <div class="landing-feat-card-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+        <div class="landing-feat-card-title">Expertly Curated Mocks</div>
+        <div class="landing-feat-card-desc">Practice with mock tests designed by academy experts to simulate the actual PSC experience.</div>
       </div>
       <div class="landing-feat-card" style="animation-delay:0.15s">
-        <div class="landing-feat-card-icon"><i class="fa-solid fa-chart-pie"></i></div>
-        <div class="landing-feat-card-title">Detailed Analytics</div>
-        <div class="landing-feat-card-desc">See your score breakdown, correct/incorrect answers, and time taken per quiz.</div>
+        <div class="landing-feat-card-icon"><i class="fa-solid fa-chart-line"></i></div>
+        <div class="landing-feat-card-title">Performance Insights</div>
+        <div class="landing-feat-card-desc">Get detailed analytics on your practice sessions to identify and improve weak areas.</div>
       </div>
       <div class="landing-feat-card" style="animation-delay:0.2s">
-        <div class="landing-feat-card-icon"><i class="fa-solid fa-link"></i></div>
-        <div class="landing-feat-card-title">Shareable Results</div>
-        <div class="landing-feat-card-desc">Every quiz and result gets a unique URL — share with your tutors or revisit anytime.</div>
+        <div class="landing-feat-card-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+        <div class="landing-feat-card-title">Revisit & Retake</div>
+        <div class="landing-feat-card-desc">Every paper you attempt is saved. Revisit your mistakes and retake tests anytime for better mastery.</div>
       </div>
     </div>
   </div>
@@ -222,8 +226,8 @@
       <div class="landing-step">
         <div class="landing-step-num">3</div>
         <div>
-          <div class="landing-step-title">Practice & Review</div>
-          <div class="landing-step-desc">AI generates a unique quiz. Submit and get instant feedback with detailed answer review.</div>
+          <div class="landing-step-title">Master the Papers</div>
+          <div class="landing-step-desc">Attempt authentic papers, review detailed answers, and track your progress toward exam success.</div>
         </div>
       </div>
     </div>
@@ -237,7 +241,7 @@
         <div class="landing-cta-desc">Join candidates already using AJK PSC Prep to ace their lecturer exams.</div>
       </div>
       <div class="landing-cta-btns">
-        <button class="btn-landing-primary" onclick="go('/account')">
+        <button class="btn-landing-primary" onclick="window._go('/login')">
           <i class="fa-solid fa-arrow-right-to-bracket"></i> ${t('landing_signin')}
         </button>
         <a href="https://wa.me/923428910567?text=Hello%2C%20I%20want%20to%20register%20for%20AJK%20PSC%20Exam%20Prep"
@@ -256,8 +260,8 @@
         <span>AJK PSC Exam Preparation Platform · Authorized access only</span>
       </div>
       <span style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="nav-link" onclick="go('/quizzes')">Quiz Library</button>
-        <button class="nav-link" onclick="go('/account')">${t('landing_signin')}</button>
+        <button class="nav-link" onclick="window._go('/quizzes')">Quiz Library</button>
+        <button class="nav-link" onclick="window._go('/login')">${t('landing_signin')}</button>
         <a href="https://wa.me/923428910567" target="_blank" class="nav-link">Contact</a>
       </span>
     </div>
