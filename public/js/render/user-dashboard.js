@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { PROF_MAP } from '../constants.js';
-import { $, setP, setV, t } from '../helpers.js';
+import { $, setP, setV, t, api } from '../helpers.js';
 import { go } from '../router.js';
 import { selectTopic } from './topics.js';
 
@@ -70,9 +70,61 @@ export async function renderUserDashboard() {
       setP(100);
       // Load recent user results
       try {
-        // We don't have a user-specific results endpoint, so we'll just show a prompt
-        $('dash-activity').innerHTML = `<div style="color:var(--fg-muted);font-size:13px;padding:16px 0">${t('no_activity')}</div>`;
-      } catch (e) { }
+        console.log('[Dashboard] Fetching recent activity...');
+        const { ok, status, data } = await api('GET', '/api/results?user=me&limit=5');
+        console.log('[Dashboard] Activity response:', { ok, status, data });
+
+        const el = $('dash-activity');
+        if (!el) return;
+
+        if (!ok || !Array.isArray(data) || data.length === 0) {
+          el.innerHTML = `<div style="color:var(--fg-muted);font-size:13px;padding:16px 0">${t('no_activity')}</div>`;
+          return;
+        }
+
+        el.innerHTML = `
+          <div class="mobile-only mob-card-list">
+            ${data.map(r => `
+              <div class="mob-card" onclick="window._go('/result/${r.resultId}?uid=${r.userId}')" style="cursor:pointer">
+                <div class="mob-card-header">
+                  <div>
+                    <div class="mob-card-title">${r.professionLabel || r.profession || '-'}</div>
+                    <div class="mob-card-subtitle">${new Date(r.createdAt).toLocaleDateString()}</div>
+                  </div>
+                  <span class="badge ${r.pass ? 'badge-success' : 'badge-error'}">${r.pass ? t('pass') : t('fail')}</span>
+                </div>
+                <div class="mob-card-row">
+                  <span class="mob-card-label">${t('score')}</span>
+                  <span class="mob-card-value" style="font-family:var(--font-mono)">${r.score || 0}/${r.total || 0} (${(r.percentage || 0).toFixed(0)}%)</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+          <div class="desktop-only">
+            <div class="table-wrap">
+              <table class="dashboard-table">
+                <thead><tr><th>Topic</th><th>Score</th><th>%</th><th>Result</th><th>Date</th></tr></thead>
+                <tbody>${data.map(r => `
+                  <tr onclick="window._go('/result/${r.resultId}?uid=${r.userId}')" style="cursor:pointer" class="hover-row">
+                    <td style="font-weight:500">${r.professionLabel || r.profession || '-'}</td>
+                    <td style="font-family:var(--font-mono)">${r.score || 0}/${r.total || 0}</td>
+                    <td style="font-family:var(--font-mono)">${(r.percentage || 0).toFixed(0)}%</td>
+                    <td><span class="badge ${r.pass ? 'badge-success' : 'badge-error'}">${r.pass ? t('pass') : t('fail')}</span></td>
+                    <td style="font-size:12px;color:var(--fg-muted)">${new Date(r.createdAt).toLocaleDateString()}</td>
+                  </tr>
+                `).join('')}</tbody>
+              </table>
+            </div>
+          </div>
+          <div style="margin-top:12px;text-align:right">
+            <button class="btn btn-ghost btn-sm" onclick="window._go('/topics')">Take another quiz →</button>
+          </div>
+        `;
+      } catch (e) {
+        console.error('[Dashboard] Error loading activity:', e);
+        const el = $('dash-activity');
+        if (el) el.innerHTML = `<div style="color:var(--error);font-size:13px;padding:16px 0"><i class="fa-solid fa-circle-exclamation"></i> Failed to load activity: ${e.message}</div>`;
+      }
     }
 
     

@@ -12,7 +12,7 @@
     rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" rel="stylesheet" />
-  <link href="styles/main.css" rel="stylesheet" />
+  <link href="/styles/main.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -20,10 +20,10 @@
     <nav class="topbar" id="main-topbar">
       <div class="topbar-inner">
         <a class="brand" href="/" onclick="window._navigate(event,'/')">
-          <div class="brand-mark"><i class="fa-solid fa-graduation-cap"></i></div>
+          <img src="/images/logo.png" alt="Career Boost" style="width:36px;height:36px;object-fit:contain" />
           <div class="brand-text">
-            <span class="brand-name" id="brand-name-text">Career Boost Officers Academy</span>
-            <span class="brand-sub" id="brand-sub-text">Career Excellence</span>
+            <span class="brand-name" id="brand-name-text">Career Boost</span>
+            <span class="brand-sub" id="brand-sub-text">Officers Academy</span>
           </div>
         </a>
         <div class="topbar-center"></div>
@@ -32,8 +32,9 @@
             <i class="fa-solid fa-language"></i>
             <span id="lang-label">اردو</span>
           </button>
-          <button class="icon-btn" onclick="window._toggleTheme()" title="Toggle theme">
-            <i class="fa-solid fa-circle-half-stroke"></i>
+          <button class="lp-theme-toggle" onclick="window._toggleTheme()" title="Toggle theme">
+            <i class="fa-solid fa-moon lp-moon"></i>
+            <i class="fa-solid fa-sun lp-sun"></i>
           </button>
           <div id="user-chip-container"></div>
         </div>
@@ -72,7 +73,7 @@
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="/js/app.js"></script>
 </body>
 
 </html>

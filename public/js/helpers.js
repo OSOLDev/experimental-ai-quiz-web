@@ -26,7 +26,8 @@ import { T } from './constants.js';
       show_explanation: 'Show Explanation', hide_explanation: 'Hide Explanation',
       notifications: 'Notifications', welcome_title: 'Welcome to the Academy',
       cred_msg: 'Your account has been created successfully. Your login credentials are:',
-      copy_creds: 'Copy Credentials', creds_copied: 'Credentials copied to clipboard!'
+      copy_creds: 'Copy Credentials', creds_copied: 'Credentials copied to clipboard!',
+      toggle_theme: 'Theme'
     });
     Object.assign(T.ur, {
       admin_quizzes: 'کوئز لائبریری',
@@ -50,7 +51,8 @@ import { T } from './constants.js';
       show_explanation: 'وضاحت دیکھیں', hide_explanation: 'وضاحت چھپائیں',
       notifications: 'اطلاعات', welcome_title: 'اکیڈمی میں خوش آمدید',
       cred_msg: 'آپ کا اکاؤنٹ کامیابی کے ساتھ بنا دیا گیا ہے۔ آپ کے لاگ ان کی تفصیلات درج ذیل ہیں:',
-      copy_creds: 'تفصیلات کاپی کریں', creds_copied: 'تفصیلات کاپی ہو گئیں!'
+      copy_creds: 'تفصیلات کاپی کریں', creds_copied: 'تفصیلات کاپی ہو گئیں!',
+      toggle_theme: 'تھیم بدلیں'
     });
 
 /* ═══════════════════════════════════════════════════════════════════════

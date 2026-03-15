@@ -31,8 +31,7 @@ export function renderLogin() {
       </div>
       <div class="login-box-wrap">
         <div class="login-box">
-          <div class="login-header">
-            <div class="login-logo"><i class="fa-solid fa-graduation-cap"></i></div>
+          <div class="login-header" style="text-align:center;margin-bottom:20px">
             <h1 class="login-title">${t('login_title')}</h1>
             <p class="login-sub">${t('login_sub')}</p>
           </div>

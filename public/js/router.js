@@ -59,6 +59,10 @@ export function route() {
 
   // EXACT ROUTE DISPATCH AS PER PROMPT
   if (p === '/') {
+    if (state.token && state.user) {
+      if (state.user.role === 'admin' || state.user.uid === 'admin') return go('/admin');
+      else return go('/dashboard');
+    }
     console.log('[Router] Matching landing...');
     return renderLanding();
   }
@@ -111,13 +115,20 @@ function requireAdmin(fn) {
 /* ═══════════════════════════════════════════════════════════════════════
    THEME & LANG
 ═══════════════════════════════════════════════════════════════════════ */
-export function toggleTheme() {
-  const h = document.documentElement, cur = h.getAttribute('data-theme');
-  const dark = cur === 'dark' || (!cur && window.matchMedia('(prefers-color-scheme:dark)').matches);
-  h.setAttribute('data-theme', dark ? 'light' : 'dark');
+export function toggleTheme(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  const h = document.documentElement;
+  const current = h.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  h.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  console.log('[Theme] Switched to:', next);
 }
 
-if (window.matchMedia('(prefers-color-scheme:dark)').matches) {
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme) {
+  document.documentElement.setAttribute('data-theme', savedTheme);
+} else if (window.matchMedia('(prefers-color-scheme:dark)').matches) {
   document.documentElement.setAttribute('data-theme', 'dark');
 }
 
@@ -150,10 +161,15 @@ export function renderChip() {
         ${!isAdmin ? `<div class="dropdown-item" onclick="window._closeUMenu();window._go('/dashboard')"><i class="fa-solid fa-gauge"></i>${t('user_dashboard')}</div>` : ''}
         ${!isAdmin ? `<div class="dropdown-item" onclick="window._closeUMenu();window._go('/topics')"><i class="fa-solid fa-list-check"></i>${t('my_topics')}</div>` : ''}
         ${isAdmin ? `<div class="dropdown-item" onclick="window._closeUMenu();window._go('/admin')"><i class="fa-solid fa-shield-halved"></i>${t('admin_dash')}</div>` : ''}
-        <div class="dropdown-divider"></div>
-        <div class="dropdown-item" onclick="window._closeUMenu();window._toggleLang()">
-          <i class="fa-solid fa-language"></i>${state.uiLang === 'en' ? 'اردو میں تبدیل کریں' : 'Switch to English'}
+        
+        <div class="dropdown-divider mobile-only"></div>
+        <div class="dropdown-item mobile-only" onclick="event.stopPropagation();window._toggleTheme(event)">
+          <i class="fa-solid fa-circle-half-stroke"></i>${t('toggle_theme') || 'Theme'}
         </div>
+        <div class="dropdown-item mobile-only" onclick="event.stopPropagation();window._toggleLang()">
+          <i class="fa-solid fa-language"></i>${state.uiLang === 'en' ? 'اردو (Urdu)' : 'English'}
+        </div>
+
         <div class="dropdown-divider"></div>
         <div class="dropdown-item danger" onclick="window._doLogout()"><i class="fa-solid fa-arrow-right-from-bracket"></i>${t('logout')}</div>
       </div>

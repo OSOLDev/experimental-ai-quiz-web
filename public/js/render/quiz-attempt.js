@@ -10,6 +10,11 @@ import { saveAndRenderResults } from './result.js';
 
 /** Called by router for /quiz/:id */
 export async function renderQuizAttemptOrPreview(quizId, params) {
+  const isPreview = params?.get('preview') === '1';
+  if (isPreview) {
+    renderQuizPublicPreview(quizId, { showAttempt: !!(state.token && state.user) });
+    return;
+  }
   // If quiz is already loaded in memory for this quizId, render it directly
   if (state.currentQuiz && state._currentQuizId === quizId) {
     renderQuiz(state.qIdx);
@@ -17,7 +22,7 @@ export async function renderQuizAttemptOrPreview(quizId, params) {
   }
   // Public preview mode (no auth) OR auth attempt
   if (!state.token || !state.user) {
-        renderQuizPublicPreview(quizId);
+        renderQuizPublicPreview(quizId, { showAttempt: false });
         return;
       }
   // Authenticated — check topic access before loading
@@ -63,11 +68,12 @@ export async function renderQuizAttemptOrPreview(quizId, params) {
 
 /** Public preview — no correct answers shown */
 export async function openQuizPreview(quizId) {
-// ... alias to public preview or specialized preview modal
-  renderQuizPublicPreview(quizId);
+  // Navigate to proper preview URL
+  go(`/quiz/${quizId}?preview=1`);
 }
 
-export async function renderQuizPublicPreview(quizId) {
+export async function renderQuizPublicPreview(quizId, opts = {}) {
+      const { showAttempt = false } = opts;
       setP(20);
       setV(`<div class="page"><div class="loader-wrap"><div class="spinner"></div><div class="loader-title">Loading quiz…</div></div></div>`);
       try {
@@ -98,12 +104,19 @@ export async function renderQuizPublicPreview(quizId) {
           <span class="badge badge-default">${(data.lang || '').toUpperCase()}</span>
         </div>
       </div>
+  ${showAttempt ? `
+  <div class="callout" style="background:var(--accent-subtle);border:1px solid var(--accent-border);border-radius:var(--radius-lg);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;font-size:13px">
+    <i class="fa-solid fa-circle-play" style="color:var(--accent)"></i>
+    <div><strong>Preview mode</strong> - Correct answers are hidden.
+      <button class="btn btn-accent btn-sm" onclick="window._go('/quiz/${quizId}')" style="margin-inline-start:10px">Attempt Quiz</button>
+    </div>
+  </div>` : `
   <div class="callout" style="background:var(--accent-subtle);border:1px solid var(--accent-border);border-radius:var(--radius-lg);padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;font-size:13px">
     <i class="fa-solid fa-lock" style="color:var(--accent)"></i>
     <div><strong>Sign in to attempt this quiz</strong> — Correct answers are hidden in preview mode.
       <button class="btn btn-accent btn-sm" onclick="window._go('/login')" style="margin-inline-start:10px">Sign In</button>
     </div>
-  </div>
+  </div>`}
       ${items}
       </div>`);
           applyMath($('main-content'));

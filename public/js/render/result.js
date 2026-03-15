@@ -48,8 +48,9 @@ export async function saveAndRenderResults() {
 
   // Navigate to shareable results URL
   const uid = state.user?.uid;
-  if (state._currentQuizId) {
-    const resultsPath = `/result/${state._currentQuizId}${uid ? `?uid=${uid}` : ''}`;
+  if (state._currentQuizId || savedResultId) {
+    const shareId = savedResultId || state._currentQuizId;
+    const resultsPath = `/result/${shareId}${uid ? `?uid=${uid}` : ''}`;
     history.replaceState(null, '', resultsPath);
   }
   setP(100);
@@ -59,11 +60,84 @@ export async function saveAndRenderResults() {
 /** renderResultPage — called by router for /result/:id (deeplink) */
 export async function renderResultPage(quizId, uid) {
   // If we have in-memory results for this quiz, render them directly
-  if (window._lastResult && state._currentQuizId === quizId) {
+  if (window._lastResult && (state._currentQuizId === quizId || window._lastResult.savedResultId === quizId)) {
     const { items, score, total, pct, pass, wrong, skip, timeStr, savedResultId } = window._lastResult;
     renderResultsPage(items, score, total, pct, pass, wrong, skip, timeStr, savedResultId);
     return;
   }
+  // Try fetching a saved result record (supports /result/:resultId deeplinks)
+  try {
+    const { ok, data } = await api('GET', `/api/results/${quizId}`);
+    if (ok && data) {
+      const items = Array.isArray(data.answers) ? data.answers.map(a => ({
+        question: a.question || '',
+        options: a.options || [],
+        correctAnswer: a.correctAnswer,
+        selectedAnswer: a.selectedAnswer ?? null,
+        isCorrect: !!a.isCorrect,
+        skipped: !!a.skipped,
+        explanation: a.explanation || '',
+        cognitiveLevel: a.cognitiveLevel || ''
+      })) : [];
+      const total = Number(data.total) || items.length || 0;
+      const score = Number(data.score) || 0;
+      const pct = data.percentage != null ? Number(data.percentage) : (total ? (score / total) * 100 : 0);
+      const pass = data.pass != null ? !!data.pass : pct >= 60;
+      const wrong = data.wrong != null ? Number(data.wrong) : items.filter(x => !x.isCorrect && !x.skipped).length;
+      const skip = data.skipped != null ? Number(data.skipped) : items.filter(x => x.skipped).length;
+      const timeStr = data.timeTaken || '';
+
+      state._currentQuizId = data.quizId || null;
+      state._currentQuizSource = data.quizSource || null;
+      state.currentProfessionId = data.profession || null;
+      window._lastQuizItems = items;
+      window._lastResult = { items, score, total, pct, pass, wrong, skip, timeStr, savedResultId: data.resultId };
+
+      renderResultsPage(items, score, total, pct, pass, wrong, skip, timeStr, data.resultId);
+      return;
+    }
+  } catch (e) {
+    console.warn('[Result] Failed to fetch result by id:', e.message);
+  }
+
+  // Fallback: try to find result by quizId among user's recent results
+  try {
+    const { ok, data } = await api('GET', '/api/results?user=me&limit=200');
+    if (ok && Array.isArray(data)) {
+      const match = data.find(r => r.quizId === quizId);
+      if (match) {
+        const items = Array.isArray(match.answers) ? match.answers.map(a => ({
+          question: a.question || '',
+          options: a.options || [],
+          correctAnswer: a.correctAnswer,
+          selectedAnswer: a.selectedAnswer ?? null,
+          isCorrect: !!a.isCorrect,
+          skipped: !!a.skipped,
+          explanation: a.explanation || '',
+          cognitiveLevel: a.cognitiveLevel || ''
+        })) : [];
+        const total = Number(match.total) || items.length || 0;
+        const score = Number(match.score) || 0;
+        const pct = match.percentage != null ? Number(match.percentage) : (total ? (score / total) * 100 : 0);
+        const pass = match.pass != null ? !!match.pass : pct >= 60;
+        const wrong = match.wrong != null ? Number(match.wrong) : items.filter(x => !x.isCorrect && !x.skipped).length;
+        const skip = match.skipped != null ? Number(match.skipped) : items.filter(x => x.skipped).length;
+        const timeStr = match.timeTaken || '';
+
+        state._currentQuizId = match.quizId || null;
+        state._currentQuizSource = match.quizSource || null;
+        state.currentProfessionId = match.profession || null;
+        window._lastQuizItems = items;
+        window._lastResult = { items, score, total, pct, pass, wrong, skip, timeStr, savedResultId: match.resultId };
+
+        renderResultsPage(items, score, total, pct, pass, wrong, skip, timeStr, match.resultId);
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn('[Result] Failed to fetch user results:', e.message);
+  }
+
   // Otherwise, this is a deeplinked result — we can't reconstruct the full result
   // without the saved result record. Show a "result not available" state.
   setV(`<div class="page"><div class="state-box">
@@ -82,7 +156,9 @@ export function renderResultsPage(items, score, total, pct, pass, wrong, skip, t
   const circMobile = 2 * Math.PI * 46, offsetMobile = circMobile - (pct / 100) * circMobile;
   const profession = PROF_MAP[state.currentProfessionId];
   const nm = profession ? (state.uiLang === 'ur' ? profession.label_ur : profession.label_en) : 'Quiz';
-  const resultsURL = state._currentQuizId ? `${location.origin}/result/${state._currentQuizId}${state.user ? `?uid=${state.user.uid}` : ''}` : '';
+  const shareId = savedResultId || state._currentQuizId;
+  const shareUid = state.user?.uid || '';
+  const resultsURL = shareId ? `${location.origin}/result/${shareId}${shareUid ? `?uid=${shareUid}` : ''}` : '';
 
   const previewBtn = state._currentQuizId
     ? `<button class="btn btn-ghost btn-full btn-sm" onclick="window._openQuizPreview('${state._currentQuizId}', window._lastQuizItems)">

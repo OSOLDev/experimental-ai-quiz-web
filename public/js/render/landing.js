@@ -51,18 +51,19 @@ export function renderLanding() {
   <nav class="lp-nav" id="lp-nav">
     <div class="lp-container lp-nav-inner">
       <a class="brand" href="/" onclick="window._navigate(event,'/')">
-        <div class="brand-mark"><i class="fa-solid fa-graduation-cap"></i></div>
+        <img src="/images/logo.png" alt="Career Boost" style="width:36px;height:36px;object-fit:contain" />
         <div class="brand-text">
-          <span class="brand-name">${t('brand_name')}</span>
-          <span class="brand-sub">Career Excellence</span>
+          <span class="brand-name">Career Boost</span>
+          <span class="brand-sub">Officers Academy</span>
         </div>
       </a>
       <div class="lp-nav-spacer"></div>
       <div class="lp-nav-actions">
-        <button class="icon-btn" onclick="window._toggleTheme()" title="Toggle theme">
-          <i class="fa-solid fa-circle-half-stroke"></i>
+        <button class="lp-theme-toggle" onclick="window._toggleTheme()" title="Toggle theme">
+          <i class="fa-solid fa-moon lp-moon"></i>
+          <i class="fa-solid fa-sun lp-sun"></i>
         </button>
-        <button class="lp-btn-nav" onclick="window._go('/login')">
+        <button class="lp-btn-neon" onclick="window._go('/login')" style="height:36px;padding:0 20px;">
           ${t('landing_signin')}
         </button>
       </div>
@@ -70,61 +71,59 @@ export function renderLanding() {
   </nav>
 
   <!-- ─────────────── HERO ─────────────── -->
-  <section class="lp-hero">
-    <div class="lp-hero-glow"></div>
-    <div class="lp-container lp-hero-grid">
+  <section class="lp-hero lp-hero-centered">
+    <div class="lp-hero-watermark">
+      <img src="/images/logo.png" alt="Background Seal" />
+    </div>
+    <div class="lp-container lp-hero-content-center">
+      <h1 class="lp-headline-main">
+        Ace Your <span class="lp-neon-text">PSC Exam</span>
+      </h1>
+      <p class="lp-subtext-main">
+        Prepare with years of authentic AJK PSC past papers and expertly curated mock tests for lecturer and commission exams.
+      </p>
 
-      <!-- Left column -->
-      <div class="lp-hero-content">
-        <div class="lp-eyebrow">
-          <span class="lp-eyebrow-dot"></span>
-          AJK Public Service Commission
-        </div>
-
-        <h1 class="lp-headline">
-          ${t('brand_name')}<br>
-          <span class="lp-headline-accent">Ace Your PSC Exam</span>
-        </h1>
-
-        <p class="lp-subtext">
-          ${t('landing_sub')}
-        </p>
-
-        <div class="lp-hero-ctas">
-          <button class="lp-btn-primary" onclick="window._go('/login')">
-            <i class="fa-solid fa-arrow-right-to-bracket"></i> Get Started
-          </button>
-          <button class="lp-btn-outline" onclick="window._go('/quizzes')">
-            <i class="fa-solid fa-book-open"></i> Browse Quizzes
-          </button>
-        </div>
-
-        <div class="lp-stats">
-          <div class="lp-stat">
-            <span class="lp-stat-value">10+</span>
-            <span class="lp-stat-label">Years Papers</span>
-          </div>
-          <div class="lp-stat-divider"></div>
-          <div class="lp-stat">
-            <span class="lp-stat-value">50k+</span>
-            <span class="lp-stat-label">MCQs Data</span>
-          </div>
-          <div class="lp-stat-divider"></div>
-          <div class="lp-stat">
-            <span class="lp-stat-value">18+</span>
-            <span class="lp-stat-label">Subjects</span>
-          </div>
-          <div class="lp-stat-divider"></div>
-          <div class="lp-stat">
-            <span class="lp-stat-value">100%</span>
-            <span class="lp-stat-label">Authentic</span>
-          </div>
-        </div>
+      <div class="lp-hero-ctas-center">
+        <button class="lp-btn-neon" onclick="window._go('/login')">
+          Get Started <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        <button class="lp-btn-neon-outline" onclick="window._go('/quizzes')">
+          <i class="fa-brands fa-readme"></i> Browse Quizzes
+        </button>
       </div>
 
-      <!-- Right column: Academy Logo -->
-      <div class="lp-hero-logo">
-        <img src="/images/logo.png" alt="Career Boost Officers Academy" class="lp-hero-logo-img" />
+      <div class="lp-stats-bar">
+        <div class="lp-stat-item">
+          <i class="fa-regular fa-file-lines lp-stat-icon"></i>
+          <div class="lp-stat-text">
+            <span class="lp-stat-val">10+</span>
+            <span class="lp-stat-lbl">YEARS PAPERS</span>
+          </div>
+        </div>
+        <div class="lp-stat-divider"></div>
+        <div class="lp-stat-item">
+          <i class="fa-solid fa-database lp-stat-icon"></i>
+          <div class="lp-stat-text">
+            <span class="lp-stat-val">50K+</span>
+            <span class="lp-stat-lbl">MCQS DATA</span>
+          </div>
+        </div>
+        <div class="lp-stat-divider"></div>
+        <div class="lp-stat-item">
+          <i class="fa-solid fa-book-open lp-stat-icon"></i>
+          <div class="lp-stat-text">
+            <span class="lp-stat-val">18+</span>
+            <span class="lp-stat-lbl">SUBJECTS</span>
+          </div>
+        </div>
+        <div class="lp-stat-divider"></div>
+        <div class="lp-stat-item">
+          <i class="fa-regular fa-circle-check lp-stat-icon"></i>
+          <div class="lp-stat-text">
+            <span class="lp-stat-val">100%</span>
+            <span class="lp-stat-lbl">AUTHENTIC</span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -196,7 +195,7 @@ export function renderLanding() {
         <h2 class="lp-cta-title">Ready to start preparing?</h2>
         <p class="lp-cta-desc">Join candidates already using the platform to ace their lecturer exams.</p>
       </div>
-      <button class="lp-btn-primary" onclick="window._go('/login')">
+      <button class="lp-btn-neon" onclick="window._go('/login')" style="height:42px;padding:0 24px;">
         <i class="fa-solid fa-arrow-right-to-bracket"></i> Get Started
       </button>
     </div>
@@ -206,7 +205,7 @@ export function renderLanding() {
   <footer class="lp-footer">
     <div class="lp-container lp-footer-inner">
       <div class="lp-footer-brand">
-        <div class="brand-mark" style="width:24px;height:24px;font-size:10px"><i class="fa-solid fa-graduation-cap"></i></div>
+        <img src="/images/logo.png" alt="Logo" style="width:24px;height:24px;object-fit:contain" />
         <span>© ${new Date().getFullYear()} Career Boost Officers Academy · All rights reserved</span>
       </div>
       <div class="lp-footer-links">
