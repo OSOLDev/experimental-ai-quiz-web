@@ -171,34 +171,34 @@ export function renderResultsPage(items, score, total, pct, pass, wrong, skip, t
         const cls = item.isCorrect ? 'correct' : item.skipped ? 'skipped' : 'incorrect';
         const icon = item.isCorrect ? 'fa-check' : item.skipped ? 'fa-minus' : 'fa-xmark';
         const qHtml = mdInline(item.question);
-        let ans = '';
-        if (item.skipped) {
-          ans = `<div class="results-mobile-review-answer skipped"><span class="results-mobile-review-tag">SKIPPED</span></div>
-                   <div class="results-mobile-review-answer correct-ans"><span class="results-mobile-review-tag">${t('correct_answer').toUpperCase()}</span><span class="md">${mdInline(item.correctAnswer)}</span></div>`;
-        } else if (item.isCorrect) {
-          ans = `<div class="results-mobile-review-answer user-correct"><i class="fa-solid fa-check" style="font-size:9px"></i><span class="results-mobile-review-tag">${t('your_answer').toUpperCase()}</span><span class="md">${mdInline(item.selectedAnswer)}</span></div>`;
-        } else {
-          ans = `<div class="results-mobile-review-answer user-wrong"><i class="fa-solid fa-xmark" style="font-size:9px"></i><span class="results-mobile-review-tag">${t('your_answer').toUpperCase()}</span><span class="md">${mdInline(item.selectedAnswer)}</span></div>
-                   <div class="results-mobile-review-answer correct-ans"><i class="fa-solid fa-check" style="font-size:9px"></i><span class="results-mobile-review-tag">${t('correct_answer').toUpperCase()}</span><span class="md">${mdInline(item.correctAnswer)}</span></div>`;
-        }
         const tutorID = `tutor-mob-${i}`;
         const cog = item.cognitiveLevel ? `<span class="badge-cognitive badge-${item.cognitiveLevel.toLowerCase()}">${t('lvl_' + item.cognitiveLevel.toLowerCase())}</span>` : '';
         const tutorHtml = item.explanation ? `
           <button class="tutor-toggle-btn" onclick="document.getElementById('${tutorID}').classList.toggle('open');">
-            <i class="fa-solid fa-microchip"></i> ${t('ai_tutor')}
+            <i class="fa-solid fa-wand-magic-sparkles"></i> ${t('ai_tutor')} ${t('explanation')}
           </button>
           <div id="${tutorID}" class="explanation-box">
-            <div class="explanation-head"><i class="fa-solid fa-graduation-cap"></i> ${t('ai_tutor')} ${t('explanation')}</div>
             <div class="explanation-text md">${mdInline(item.explanation)}</div>
           </div>` : '';
+
+        let ansHtml = '';
+        if (item.skipped) {
+          ansHtml = `<div class="results-mobile-review-answer skipped"><span class="results-mobile-review-tag"><i class="fa-solid fa-minus"></i></span><span class="md" style="opacity:.6">${t('no_answer')}</span></div>
+                     <div class="results-mobile-review-answer correct-ans"><span class="results-mobile-review-tag"><i class="fa-solid fa-check"></i></span><span class="md">${mdInline(item.correctAnswer)}</span></div>`;
+        } else if (item.isCorrect) {
+          ansHtml = `<div class="results-mobile-review-answer user-correct"><span class="results-mobile-review-tag"><i class="fa-solid fa-check"></i></span><span class="md">${mdInline(item.selectedAnswer)}</span></div>`;
+        } else {
+          ansHtml = `<div class="results-mobile-review-answer user-wrong"><span class="results-mobile-review-tag"><i class="fa-solid fa-xmark"></i></span><span class="md">${mdInline(item.selectedAnswer)}</span></div>
+                     <div class="results-mobile-review-answer correct-ans"><span class="results-mobile-review-tag"><i class="fa-solid fa-check"></i></span><span class="md">${mdInline(item.correctAnswer)}</span></div>`;
+        }
 
         return `<div class="results-mobile-review-card ${cls}" style="animation-delay:${i * .02}s">
         <div class="results-mobile-review-card-head">
           <div class="results-mobile-review-icon ${cls}"><i class="fa-solid ${icon}"></i></div>
-          <div class="results-mobile-review-q md" style="flex:1"><span style="font-family:var(--font-mono);font-size:10px;color:var(--fg-subtle);margin-inline-end:4px">${i + 1}.</span>${qHtml}</div>
+          <div class="results-mobile-review-q md"><span style="font-family:var(--font-mono);font-size:10px;color:var(--fg-subtle);margin-inline-end:4px">${i + 1}.</span>${qHtml}</div>
           ${cog}
         </div>
-        <div class="results-mobile-review-answers">${ans}${tutorHtml}</div>
+        <div class="results-mobile-review-answers">${ansHtml}${tutorHtml}</div>
       </div>`;
       }).join('');
 
@@ -207,36 +207,36 @@ export function renderResultsPage(items, score, total, pct, pass, wrong, skip, t
         const cls = item.isCorrect ? 'correct' : item.skipped ? 'skipped' : 'incorrect';
         const icon = item.isCorrect ? 'fa-check' : item.skipped ? 'fa-minus' : 'fa-xmark';
         const qHtml = mdInline(item.question);
-        let ans = '';
-        if (item.skipped)
-          ans = `<div class="review-answer-row skipped-row"><span class="review-tag">SKIPPED</span></div>
-             <div class="review-answer-row correct-ans"><span class="review-tag">${t('correct_answer').toUpperCase()}</span><span class="md">${mdInline(item.correctAnswer)}</span></div>`;
-        else if (item.isCorrect)
-          ans = `<div class="review-answer-row user-correct"><i class="fa-solid fa-check" style="font-size:10px"></i><span class="review-tag">${t('your_answer').toUpperCase()}</span><span class="md">${mdInline(item.selectedAnswer)}</span></div>`;
-        else
-          ans = `<div class="review-answer-row user-wrong"><i class="fa-solid fa-xmark" style="font-size:10px"></i><span class="review-tag">${t('your_answer').toUpperCase()}</span><span class="md">${mdInline(item.selectedAnswer)}</span></div>
-             <div class="review-answer-row correct-ans"><i class="fa-solid fa-check" style="font-size:10px"></i><span class="review-tag">${t('correct_answer').toUpperCase()}</span><span class="md">${mdInline(item.correctAnswer)}</span></div>`;
-        
         const tutorID = `tutor-desk-${i}`;
         const cog = item.cognitiveLevel ? `<span class="badge-cognitive badge-${item.cognitiveLevel.toLowerCase()}">${t('lvl_' + item.cognitiveLevel.toLowerCase())}</span>` : '';
         const tutorHtml = item.explanation ? `
           <button class="tutor-toggle-btn" onclick="document.getElementById('${tutorID}').classList.toggle('open');">
-            <i class="fa-solid fa-microchip"></i> ${t('ai_tutor')} ${t('explanation')}
+            <i class="fa-solid fa-wand-magic-sparkles"></i> ${t('ai_tutor')} ${t('explanation')}
           </button>
           <div id="${tutorID}" class="explanation-box">
-            <div class="explanation-head"><i class="fa-solid fa-graduation-cap"></i> ${t('ai_tutor')} ${t('explanation')}</div>
             <div class="explanation-text md">${mdInline(item.explanation)}</div>
           </div>` : '';
+
+        let ansHtml = '';
+        if (item.skipped) {
+          ansHtml = `<div class="review-answer-row skipped-row"><span class="review-tag">${t('skipped').toUpperCase()}</span><span class="md" style="opacity:.6">${t('no_answer')}</span></div>
+                     <div class="review-answer-row correct-ans"><span class="review-tag"><i class="fa-solid fa-check"></i> ${t('correct_answer').toUpperCase()}</span><span class="md">${mdInline(item.correctAnswer)}</span></div>`;
+        } else if (item.isCorrect) {
+          ansHtml = `<div class="review-answer-row user-correct"><span class="review-tag"><i class="fa-solid fa-check"></i> ${t('your_answer').toUpperCase()}</span><span class="md">${mdInline(item.selectedAnswer)}</span></div>`;
+        } else {
+          ansHtml = `<div class="review-answer-row user-wrong"><span class="review-tag"><i class="fa-solid fa-xmark"></i> ${t('your_answer').toUpperCase()}</span><span class="md">${mdInline(item.selectedAnswer)}</span></div>
+                     <div class="review-answer-row correct-ans"><span class="review-tag"><i class="fa-solid fa-check"></i> ${t('correct_answer').toUpperCase()}</span><span class="md">${mdInline(item.correctAnswer)}</span></div>`;
+        }
 
         return `<div class="review-card ${cls}" style="animation-delay:${i * .02}s">
         <div class="review-card-head">
           <div class="review-icon ${cls}"><i class="fa-solid ${icon}"></i></div>
-          <div class="review-q md" style="flex:1">
+          <div class="review-q md">
             <span style="font-family:var(--font-mono);font-size:11px;color:var(--fg-subtle)">${i + 1}. </span>${qHtml}
           </div>
           ${cog}
         </div>
-        <div class="review-answers">${ans}${tutorHtml}</div>
+        <div class="review-answers">${ansHtml}${tutorHtml}</div>
       </div>`;
       }).join('');
 

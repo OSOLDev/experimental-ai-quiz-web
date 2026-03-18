@@ -69,12 +69,25 @@ export function route() {
   }
   if (p === '/dashboard') return requireAuth(() => renderUserDashboard());
   if (p === '/topics') return requireAuth(() => renderTopicsView({}));
-  
+
+  // Route: /topics/:professionId - Show topics for a profession
   let match = matchRoute('/topics/:professionId', p);
   if (match) return requireAuth(() => renderTopicsView({ professionId: match.professionId }));
 
-  match = matchRoute('/topics/:professionId/:categoryKey', p);
-  if (match) return requireAuth(() => renderTopicsView({ professionId: match.professionId, categoryKey: match.categoryKey }));
+  // Route: /topics/:professionId/:topicId - Show subtopics for a topic
+  match = matchRoute('/topics/:professionId/:topicId', p);
+  if (match) return requireAuth(() => renderTopicsView({
+    professionId: match.professionId,
+    topicId: match.topicId
+  }));
+
+  // Route: /topics/:professionId/:topicId/:subtopicId - Configure quiz for a subtopic
+  match = matchRoute('/topics/:professionId/:topicId/:subtopicId', p);
+  if (match) return requireAuth(() => renderTopicsView({
+    professionId: match.professionId,
+    topicId: match.topicId,
+    subtopicId: match.subtopicId
+  }));
 
   match = matchRoute('/quiz/:id', p);
   if (match) return renderQuizAttemptOrPreview(match.id, q);

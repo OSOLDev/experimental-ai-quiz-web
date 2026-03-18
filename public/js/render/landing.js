@@ -13,12 +13,12 @@ export function renderLanding() {
   const topics = [
     { id: 'LEC-ENG-17', icon: 'fa-spell-check', label: 'Lecturer English' },
     { id: 'LEC-URD-17', icon: 'fa-book-open', label: 'Lecturer Urdu' },
-    { id: 'LEC-MATH-17', icon: 'fa-square-root-variable', label: 'Lecturer Mathematics' },
+    { id: 'LEC-MTH-17', icon: 'fa-square-root-variable', label: 'Lecturer Mathematics' },
     { id: 'LEC-CS-17', icon: 'fa-laptop-code', label: 'Computer Science' },
     { id: 'LEC-PHY-17', icon: 'fa-atom', label: 'Lecturer Physics' },
-    { id: 'LEC-CHEM-17', icon: 'fa-flask', label: 'Lecturer Chemistry' },
+    { id: 'LEC-CHM-17', icon: 'fa-flask', label: 'Lecturer Chemistry' },
     { id: 'LEC-ISL-17', icon: 'fa-moon', label: 'Islamic Studies' },
-    { id: 'LEC-PAK-17', icon: 'fa-flag', label: 'Pakistan Studies' },
+    { id: 'LEC-PS-17', icon: 'fa-flag', label: 'Pakistan Studies' },
     { id: 'LEC-GEO-17', icon: 'fa-earth-asia', label: 'Lecturer Geography' },
     { id: 'LEC-HIS-17', icon: 'fa-landmark', label: 'Lecturer History' },
     { id: 'LEC-EDU-17', icon: 'fa-school', label: 'Lecturer Education' },
@@ -27,8 +27,8 @@ export function renderLanding() {
     { id: 'LEC-BOT-17', icon: 'fa-seedling', label: 'Lecturer Botany' },
     { id: 'LEC-ZOO-17', icon: 'fa-paw', label: 'Lecturer Zoology' },
     { id: 'LEC-COM-17', icon: 'fa-briefcase', label: 'Lecturer Commerce' },
-    { id: 'LEC-STAT-17', icon: 'fa-chart-bar', label: 'Lecturer Statistics' },
-    { id: 'LEC-ARA-17', icon: 'fa-star-and-crescent', label: 'Lecturer Arabic' },
+    { id: 'LEC-STA-17', icon: 'fa-chart-bar', label: 'Lecturer Statistics' },
+    { id: 'LEC-ARB-17', icon: 'fa-star-and-crescent', label: 'Lecturer Arabic' },
   ];
 
   const features = [
@@ -51,7 +51,7 @@ export function renderLanding() {
   <nav class="lp-nav" id="lp-nav">
     <div class="lp-container lp-nav-inner">
       <a class="brand" href="/" onclick="window._navigate(event,'/')">
-        <img src="/images/logo.png" alt="Career Boost" style="width:36px;height:36px;object-fit:contain" />
+        <img src="/images/logo.webp" alt="Career Boost" style="width:36px;height:36px;object-fit:contain" />
         <div class="brand-text">
           <span class="brand-name">Career Boost</span>
           <span class="brand-sub">Officers Academy</span>
@@ -73,7 +73,7 @@ export function renderLanding() {
   <!-- ─────────────── HERO ─────────────── -->
   <section class="lp-hero lp-hero-centered">
     <div class="lp-hero-watermark">
-      <img src="/images/logo.png" alt="Background Seal" />
+      <img src="/images/logo.webp" alt="Background Seal" />
     </div>
     <div class="lp-container lp-hero-content-center">
       <h1 class="lp-headline-main">
@@ -205,7 +205,7 @@ export function renderLanding() {
   <footer class="lp-footer">
     <div class="lp-container lp-footer-inner">
       <div class="lp-footer-brand">
-        <img src="/images/logo.png" alt="Logo" style="width:24px;height:24px;object-fit:contain" />
+        <img src="/images/logo.webp" alt="Logo" style="width:24px;height:24px;object-fit:contain" />
         <span>© ${new Date().getFullYear()} Career Boost Officers Academy · All rights reserved</span>
       </div>
       <div class="lp-footer-links">

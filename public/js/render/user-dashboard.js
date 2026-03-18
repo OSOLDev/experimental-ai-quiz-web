@@ -2,7 +2,6 @@ import { state } from '../state.js';
 import { PROF_MAP } from '../constants.js';
 import { $, setP, setV, t, api } from '../helpers.js';
 import { go } from '../router.js';
-import { selectTopic } from './topics.js';
 
 /* ═══════════════════════════════════════════════════════════════════════
    USER DASHBOARD  /dashboard
@@ -44,7 +43,7 @@ export async function renderUserDashboard() {
           ${(state.user.topics || []).map(id => {
         const p = PROF_MAP[id];
         const nm = p ? (state.uiLang === 'ur' ? p.label_ur : p.label_en) : id;
-        return `<span class="tag" onclick="window._selectTopic('${id}')" style="cursor:pointer"><i class="${p?.icon || 'fa-solid fa-book'}" style="font-size:10px"></i>${nm}</span>`;
+        return `<span class="tag" onclick="window._go('/topics/${id}')" style="cursor:pointer"><i class="${p?.icon || 'fa-solid fa-book'}" style="font-size:10px"></i>${nm}</span>`;
       }).join('') || `<span style="color:var(--fg-muted);font-size:13px">No topics assigned. Contact admin.</span>`}
         </div>
       </div>
