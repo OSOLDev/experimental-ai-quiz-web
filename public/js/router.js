@@ -54,9 +54,6 @@ export function route() {
   const isAdminPage = p.startsWith('/admin');
   $('main-topbar').style.display = isAdminPage ? 'none' : '';
 
-  const langBtn = $('lang-toggle-btn');
-  if (langBtn) langBtn.style.display = (state.user && p !== '/') ? '' : 'none';
-
   // EXACT ROUTE DISPATCH AS PER PROMPT
   if (p === '/') {
     if (state.token && state.user) {
@@ -147,26 +144,41 @@ export function toggleLang() {
 ═══════════════════════════════════════════════════════════════════════ */
 export function renderChip() {
   const c = $('user-chip-container');
-  if (!state.user) { if(c) c.innerHTML = ''; return; }
+  const n = $('notif-dd');
+  if (!state.user) { 
+    if(c) c.innerHTML = ''; 
+    if(n) n.style.display = 'none';
+    return; 
+  }
+  if (n) {
+    n.style.display = 'block';
+    updateNotifs();
+  }
   const init = (state.user.name || '?')[0].toUpperCase();
   const isAdmin = state.user.role === 'admin' || state.user.uid === 'admin';
   c.innerHTML = `
     <div class="dropdown" id="user-dd">
       <div class="user-chip" onclick="window._toggleUMenu()">
         <div class="user-avatar">${init}</div>
-        <span class="user-chip-name">${state.user.name}</span>
-        <i class="fa-solid fa-chevron-down" style="font-size:10px;color:var(--fg-subtle);margin-inline-start:2px"></i>
       </div>
       <div class="dropdown-menu" id="user-menu">
+        <div class="dropdown-item user-info-header">
+          <div class="user-avatar-large">${init}</div>
+          <div class="user-details">
+            <div class="user-name-title">${state.user.name || 'User'}</div>
+            <div class="user-email-label">${state.user.email || (isAdmin ? 'Admin' : 'Student')}</div>
+          </div>
+        </div>
+        <div class="dropdown-divider"></div>
         ${!isAdmin ? `<div class="dropdown-item" onclick="window._closeUMenu();window._go('/dashboard')"><i class="fa-solid fa-gauge"></i>${t('user_dashboard')}</div>` : ''}
         ${!isAdmin ? `<div class="dropdown-item" onclick="window._closeUMenu();window._go('/topics')"><i class="fa-solid fa-list-check"></i>${t('my_topics')}</div>` : ''}
         ${isAdmin ? `<div class="dropdown-item" onclick="window._closeUMenu();window._go('/admin')"><i class="fa-solid fa-shield-halved"></i>${t('admin_dash')}</div>` : ''}
-        
-        <div class="dropdown-divider mobile-only"></div>
-        <div class="dropdown-item mobile-only" onclick="event.stopPropagation();window._toggleTheme(event)">
+
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-item" onclick="event.stopPropagation();window._toggleTheme(event)">
           <i class="fa-solid fa-circle-half-stroke"></i>${t('toggle_theme') || 'Theme'}
         </div>
-        <div class="dropdown-item mobile-only" onclick="event.stopPropagation();window._toggleLang()">
+        <div class="dropdown-item" onclick="event.stopPropagation();window._toggleLang()">
           <i class="fa-solid fa-language"></i>${state.uiLang === 'en' ? 'اردو (Urdu)' : 'English'}
         </div>
 
@@ -175,8 +187,54 @@ export function renderChip() {
       </div>
     </div>`;
   document.addEventListener('click', function outer(e) {
-    if (!$('user-dd')?.contains(e.target)) { closeUMenu(); document.removeEventListener('click', outer); }
+    if (!$('user-dd')?.contains(e.target)) { closeUMenu(); }
+    if (!$('notif-dd')?.contains(e.target)) { closeNotifMenu(); }
   });
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   NOTIFICATIONS
+   ═══════════════════════════════════════════════════════════════════════ */
+export function toggleNotifMenu(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  $('notif-menu')?.classList.toggle('open');
+}
+
+export function closeNotifMenu() {
+  $('notif-menu')?.classList.remove('open');
+}
+
+export function updateNotifs() {
+  const list = $('notif-list');
+  const dot = $('notif-dot');
+  if (!list) return;
+
+  const notifs = state.user?.notifications || [];
+  if (notifs.length === 0) {
+    list.innerHTML = `<div class="notif-empty">No new notifications</div>`;
+    if (dot) dot.style.display = 'none';
+    return;
+  }
+
+  if (dot) dot.style.display = 'block';
+
+  list.innerHTML = [...notifs].reverse().map(n => `
+    <div class="notif-item">
+      <div class="notif-item-title">${n.title}</div>
+      <div class="notif-item-msg">${n.message}</div>
+      <div class="notif-item-time">${new Date(n.createdAt).toLocaleDateString()}</div>
+    </div>
+  `).join('');
+}
+
+export function markAllRead(e) {
+  if (e) { e.preventDefault(); e.stopPropagation(); }
+  // For now, just clear locally
+  if (state.user) {
+    state.user.notifications = [];
+    sessionStorage.setItem('psc_user', JSON.stringify(state.user));
+    updateNotifs();
+  }
 }
 
 export function toggleUMenu() { $('user-menu')?.classList.toggle('open'); }
@@ -204,6 +262,9 @@ Object.assign(window, {
   _toggleTheme: toggleTheme,
   _toggleUMenu: toggleUMenu,
   _closeUMenu: closeUMenu,
+  _toggleNotifMenu: toggleNotifMenu,
+  _closeNotifMenu: closeNotifMenu,
+  _markAllRead: markAllRead,
   _toggleLang: toggleLang,
   _doLogout: doLogout
 });

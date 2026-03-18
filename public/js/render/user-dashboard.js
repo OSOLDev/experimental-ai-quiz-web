@@ -28,28 +28,18 @@ export async function renderUserDashboard() {
           <button class="btn btn-accent btn-full" onclick="window._go('/topics')">
             <i class="fa-solid fa-play"></i> Start a Quiz
           </button>
-          <button class="btn btn-ghost btn-full" onclick="window._go('/topics')">
-            <i class="fa-solid fa-book-open"></i> Browse Topics
+          <button class="btn btn-ghost btn-full" onclick="window._go('/quizzes')">
+            <i class="fa-solid fa-book-open"></i> Quiz Library
           </button>
         </div>
       </div>
       <div class="dashboard-card">
-        <div class="dashboard-card-title"><i class="fa-solid fa-bell" style="color:var(--accent)"></i>${t('notifications')}</div>
-        <div id="dash-notifications" style="max-height: 300px; overflow-y: auto">
-          ${(state.user.notifications || []).length > 0 ? 
-            [...state.user.notifications].reverse().map(n => `
-              <div class="panel-list-item" style="flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 0">
-                <div style="font-weight: 700; font-size: 14px; color: var(--brand)">${n.title}</div>
-                <div style="font-size: 13px; line-height: 1.5">${n.message}</div>
-                <div style="font-size: 11px; color: var(--fg-muted)">${new Date(n.createdAt).toLocaleDateString()}</div>
-              </div>
-            `).join('') :
-            `<div style="color:var(--fg-muted);font-size:13px;padding:12px 0">No notifications yet.</div>`
-          }
+        <div class="dashboard-card-title">
+          <i class="fa-solid fa-list-check" style="color:var(--accent)"></i>${t('my_topics')}
+          <button class="btn btn-ghost btn-sm" onclick="window._go('/topics')" style="margin-inline-start:auto;font-size:11px">
+            <i class="fa-solid fa-grid-2"></i> View All Professions
+          </button>
         </div>
-      </div>
-      <div class="dashboard-card">
-        <div class="dashboard-card-title"><i class="fa-solid fa-list-check" style="color:var(--accent)"></i>${t('my_topics')}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px" id="dash-topics">
           ${(state.user.topics || []).map(id => {
         const p = PROF_MAP[id];
@@ -64,26 +54,67 @@ export async function renderUserDashboard() {
         <span class="section-head-title">${t('recent_activity')}</span>
         <div class="section-head-line"></div>
       </div>
-      <div id="dash-activity"><div class="spinner" style="width:20px;height:20px"></div></div>
+      <div id="dash-activity">
+        <div class="desktop-only">
+          <div class="table-wrap">
+            <table class="dashboard-table">
+              <thead><tr><th>Topic</th><th>Score</th><th>%</th><th>Result</th><th>Date</th></tr></thead>
+              <tbody>${[0, 1, 2, 3, 4].map(() => `
+                <tr>
+                  <td><div class="skel" style="height:14px;width:180px"></div></td>
+                  <td><div class="skel" style="height:14px;width:70px"></div></td>
+                  <td><div class="skel" style="height:14px;width:50px"></div></td>
+                  <td><div class="skel" style="height:18px;width:45px;border-radius:var(--radius)"></div></td>
+                  <td><div class="skel" style="height:12px;width:60px"></div></td>
+                </tr>
+              `).join('')}</tbody>
+            </table>
+          </div>
+        </div>
+        <div class="mobile-only mob-card-list">
+          ${[0, 1, 2, 3, 4].map(() => `
+            <div class="mob-card">
+              <div class="mob-card-header">
+                <div>
+                  <div class="skel" style="height:16px;width:160px;margin-bottom:6px"></div>
+                  <div class="skel" style="height:12px;width:100px"></div>
+                </div>
+                <div class="skel" style="height:18px;width:50px;border-radius:var(--radius)"></div>
+              </div>
+              <div class="mob-card-row">
+                <span class="mob-card-label">${t('score')}</span>
+                <div class="skel" style="height:14px;width:70px"></div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
     </div>
   </div>`);
       setP(100);
       // Load recent user results
       try {
         console.log('[Dashboard] Fetching recent activity...');
-        const { ok, status, data } = await api('GET', '/api/results?user=me&limit=5');
-        console.log('[Dashboard] Activity response:', { ok, status, data });
+        // Only fetch 5 items for recent activity widget - optimized for performance
+        const { ok, status, data: resp } = await api('GET', '/api/results?user=me&limit=5');
+        console.log('[Dashboard] Activity response:', { ok, status, resp });
 
         const el = $('dash-activity');
         if (!el) return;
 
-        if (!ok || !Array.isArray(data) || data.length === 0) {
-          el.innerHTML = `<div style="color:var(--fg-muted);font-size:13px;padding:16px 0">${t('no_activity')}</div>`;
+        const data = resp?.results || [];
+
+        if (!ok || data.length === 0) {
+          el.innerHTML = `<div style="color:var(--fg-muted);font-size:13px;padding:16px 0" class="content-fade-in">${t('no_activity')}</div>`;
           return;
         }
 
+        // Fade out skeletons first
+        el.querySelectorAll('.skel').forEach(sk => sk.classList.add('fade-out'));
+        await new Promise(r => setTimeout(r, 180));
+
         el.innerHTML = `
-          <div class="mobile-only mob-card-list">
+          <div class="mobile-only mob-card-list content-fade-in">
             ${data.map(r => `
               <div class="mob-card" onclick="window._go('/result/${r.resultId}?uid=${r.userId}')" style="cursor:pointer">
                 <div class="mob-card-header">
@@ -100,7 +131,7 @@ export async function renderUserDashboard() {
               </div>
             `).join('')}
           </div>
-          <div class="desktop-only">
+          <div class="desktop-only content-fade-in">
             <div class="table-wrap">
               <table class="dashboard-table">
                 <thead><tr><th>Topic</th><th>Score</th><th>%</th><th>Result</th><th>Date</th></tr></thead>
@@ -116,14 +147,14 @@ export async function renderUserDashboard() {
               </table>
             </div>
           </div>
-          <div style="margin-top:12px;text-align:right">
+          <div style="margin-top:12px;text-align:right" class="content-fade-in">
             <button class="btn btn-ghost btn-sm" onclick="window._go('/topics')">Take another quiz →</button>
           </div>
         `;
       } catch (e) {
         console.error('[Dashboard] Error loading activity:', e);
         const el = $('dash-activity');
-        if (el) el.innerHTML = `<div style="color:var(--error);font-size:13px;padding:16px 0"><i class="fa-solid fa-circle-exclamation"></i> Failed to load activity: ${e.message}</div>`;
+        if (el) el.innerHTML = `<div style="color:var(--error);font-size:13px;padding:16px 0" class="content-fade-in"><i class="fa-solid fa-circle-exclamation"></i> Failed to load activity: ${e.message}</div>`;
       }
     }
 

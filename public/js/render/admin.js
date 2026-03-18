@@ -14,10 +14,20 @@ const ADMIN_NAV = [
   { id: 'quizzes', path: '/admin/quizzes', icon: 'fa-book-open', labelKey: 'admin_quizzes' },
 ];
 
+// Pagination state
+let _usersPagination = { nextCursor: null, hasMore: false, page: 0 };
+let _resultsPagination = { nextCursor: null, hasMore: false, page: 0 };
+let _quizzesPagination = { nextCursor: null, hasMore: false, page: 0 };
+
 export function renderAdmin(tab) {
       const activeNav = ADMIN_NAV.find(n => n.id === tab) || ADMIN_NAV[0];
       $('main-topbar').style.display = 'none';
       setP(30);
+
+      // Reset pagination when switching tabs
+      if (tab === 'users') { _usersPagination = { nextCursor: null, hasMore: false, page: 0 }; }
+      if (tab === 'results') { _resultsPagination = { nextCursor: null, hasMore: false, page: 0 }; }
+      if (tab === 'quizzes') { _quizzesPagination = { nextCursor: null, hasMore: false, page: 0 }; }
   const navH = ADMIN_NAV.map(n => `
 <a class="admin-nav-item ${tab === n.id ? 'active' : ''}" href="${n.path}" onclick="window._navigate(event,'${n.path}')">
   <i class="fa-solid ${n.icon}"></i>${t(n.labelKey)}
@@ -36,8 +46,8 @@ export function renderAdmin(tab) {
       <div class="admin-nav-logo">
         <div style="width:34px;height:34px;background:var(--brand);color:var(--brand-fg);border-radius:var(--radius-md);display:grid;place-items:center;font-size:15px;margin-bottom:8px">
           <i class="fa-solid fa-shield-halved"></i></div>
-        <div style="font-size:13px;font-weight:700;color:var(--fg)">Admin Panel</div>
-        <div style="font-size:10px;color:var(--fg-subtle);font-family:var(--font-mono)">AJK PSC Platform</div>
+        <div style="font-size:14px;font-weight:700;color:var(--accent);letter-spacing:-0.01em">Admin Panel</div>
+        <div style="font-size:10px;color:var(--fg-subtle);font-family:var(--font-sans);font-weight:600;text-transform:uppercase;letter-spacing:0.04em">AJK PSC Platform</div>
       </div>
       <div class="admin-nav-section">Navigation</div>
       ${navH}
@@ -68,15 +78,52 @@ export function renderAdmin(tab) {
     function adminDashHTML() {
       return `<div style="animation:fadeUp .25s ease both">
     <div style="margin-bottom:24px">
-      <h1 style="font-family:var(--font-serif);font-size:26px;font-weight:600;margin-bottom:4px">Dashboard</h1>
+      <h1 class="admin-page-title">Dashboard</h1>
       <p style="color:var(--fg-muted);font-size:14px">Platform overview</p>
     </div>
     <div class="stats-grid" id="stats-grid">
-      ${[0, 1, 2, 3].map(() => `<div class="stat-card"><div class="skel" style="height:28px;width:60px;margin-bottom:8px"></div><div class="skel" style="height:14px;width:80px"></div></div>`).join('')}
+      ${[0, 1, 2, 3, 4].map(() => `<div class="stat-card">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div class="skel" style="width:32px;height:32px;border-radius:var(--radius-md)"></div>
+          <div class="skel" style="height:14px;width:100px"></div>
+        </div>
+        <div class="skel" style="height:28px;width:80px"></div>
+      </div>`).join('')}
     </div>
     <div style="margin-top:28px">
       <div class="section-head"><span class="section-head-title">Recent Results</span><div class="section-head-line"></div></div>
-      <div id="recent-results"><div style="padding:20px;color:var(--fg-muted);font-size:13px">Loading…</div></div>
+      <div id="recent-results">
+        <div class="desktop-only">
+          <div class="table-wrap"><table>
+            <thead><tr><th>Name</th><th>Topic</th><th>Score</th><th>Result</th><th>Quiz</th><th>Date</th></tr></thead>
+            <tbody>${[0, 1, 2, 3, 4].map(() => `<tr>
+              <td><div class="skel" style="height:14px;width:120px"></div></td>
+              <td><div class="skel" style="height:18px;width:80px;border-radius:var(--radius)"></div></td>
+              <td><div class="skel" style="height:14px;width:70px"></div></td>
+              <td><div class="skel" style="height:18px;width:40px;border-radius:var(--radius)"></div></td>
+              <td><div class="skel" style="height:24px;width:50px"></div></td>
+              <td><div class="skel" style="height:12px;width:60px"></div></td>
+            </tr>`).join('')}</tbody>
+          </table></div>
+        </div>
+        <div class="mobile-only mob-card-list">
+          ${[0, 1, 2, 3, 4].map(() => `<div class="mob-card">
+            <div class="mob-card-header">
+              <div><div class="skel" style="height:16px;width:140px;margin-bottom:6px"></div>
+              <div class="skel" style="height:12px;width:100px"></div></div>
+              <div class="skel" style="height:18px;width:50px;border-radius:var(--radius)"></div>
+            </div>
+            <div class="mob-card-row">
+              <span class="mob-card-label">Score</span>
+              <div class="skel" style="height:14px;width:60px"></div>
+            </div>
+            <div class="mob-card-row">
+              <span class="mob-card-label">Date</span>
+              <div class="skel" style="height:12px;width:50px"></div>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>
     </div>
   </div>`;
     }
@@ -87,13 +134,16 @@ export function renderAdmin(tab) {
         ]);
         const sg = $('stats-grid');
         if (so && sg) {
+          // Fade out skeletons first
+          sg.querySelectorAll('.skel').forEach(el => el.classList.add('fade-out'));
+          await new Promise(r => setTimeout(r, 180));
           sg.innerHTML = [
             { n: stats.totalUsers, l: t('total_users'), icon: 'fa-users', c: 'var(--accent)' },
             { n: stats.activeUsers, l: t('active_users'), icon: 'fa-user-check', c: 'var(--success)' },
             { n: stats.totalResults, l: t('total_results'), icon: 'fa-chart-bar', c: 'var(--warning)' },
             { n: stats.totalQuizzes || 0, l: 'Total Quizzes', icon: 'fa-book-open', c: 'var(--accent)' },
             { n: (stats.avgScore || 0) + '%', l: t('avg_score'), icon: 'fa-star', c: 'var(--success)' },
-          ].map(s => `<div class="stat-card">
+          ].map(s => `<div class="stat-card content-fade-in">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
           <div style="width:32px;height:32px;background:color-mix(in srgb,${s.c} 15%,transparent);color:${s.c};border-radius:var(--radius-md);display:grid;place-items:center;font-size:13px">
             <i class="fa-solid ${s.icon}"></i></div>
@@ -104,9 +154,12 @@ export function renderAdmin(tab) {
         }
         const rr = $('recent-results');
         if (ro && results?.length && rr) {
+          // Fade out skeletons first
+          rr.querySelectorAll('.skel').forEach(el => el.classList.add('fade-out'));
+          await new Promise(r => setTimeout(r, 180));
           rr.innerHTML = `
             <!-- Desktop table -->
-            <div class="desktop-only">
+            <div class="desktop-only content-fade-in">
               <div class="table-wrap"><table>
                 <thead><tr><th>Name</th><th>Topic</th><th>Score</th><th>Result</th><th>Quiz</th><th>Date</th></tr></thead>
                 <tbody>${results.slice(0, 5).map(r => `<tr>
@@ -120,7 +173,7 @@ export function renderAdmin(tab) {
               </table></div>
             </div>
             <!-- Mobile cards -->
-            <div class="mobile-only mob-card-list">
+            <div class="mobile-only mob-card-list content-fade-in">
               ${results.slice(0, 5).map(r => `
                 <div class="mob-card">
                   <div class="mob-card-header">
@@ -140,8 +193,8 @@ export function renderAdmin(tab) {
                 </div>
               `).join('')}
             </div>
-        <div style="margin-top:10px"><a href="/admin/results" class="btn btn-ghost btn-sm" onclick="window._navigate(event,'/admin/results')">View all results →</a></div>`;
-        } else if (rr) { rr.innerHTML = `<div style="padding:20px;color:var(--fg-muted);font-size:13px">${t('no_results')}</div>`; }
+        <div style="margin-top:10px" class="content-fade-in"><a href="/admin/results" class="btn btn-ghost btn-sm" onclick="window._navigate(event,'/admin/results')">View all results →</a></div>`;
+        } else if (rr) { rr.innerHTML = `<div style="padding:20px;color:var(--fg-muted);font-size:13px" class="content-fade-in">${t('no_results')}</div>`; }
       } catch (e) { console.error(e); }
     }
 
@@ -150,22 +203,66 @@ export function renderAdmin(tab) {
       return `<div style="animation:fadeUp .25s ease both">
     <div class="admin-page-head" style="margin-bottom:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
       <div>
-        <h1 style="font-family:var(--font-serif);font-size:26px;font-weight:600;margin-bottom:4px">${t('admin_users')}</h1>
+        <h1 class="admin-page-title">${t('admin_users')}</h1>
         <p style="color:var(--fg-muted);font-size:14px">Manage platform users and their topic access</p>
       </div>
   <button class="btn btn-accent" onclick="window._openUserModal()"><i class="fa-solid fa-plus"></i> ${t('add_user')}</button>
     </div>
-    <div id="users-table"><div style="padding:20px;color:var(--fg-muted);font-size:13px">Loading…</div></div>
+    <div id="users-table">
+      <div class="desktop-only">
+        <div class="table-wrap"><table>
+          <thead><tr><th>${t('user_name')}</th><th>${t('user_email')}</th><th>${t('user_phone')}</th><th>${t('user_topics')}</th><th>${t('user_expiry')}</th><th>${t('user_status')}</th><th>${t('user_actions')}</th></tr></thead>
+          <tbody>${[0, 1, 2, 3, 4, 5].map(() => `<tr>
+            <td><div class="skel" style="height:14px;width:140px"></div></td>
+            <td><div class="skel" style="height:12px;width:160px"></div></td>
+            <td><div class="skel" style="height:12px;width:100px"></div></td>
+            <td><div style="display:flex;gap:4px;flex-wrap:wrap"><div class="skel" style="height:18px;width:50px;border-radius:var(--radius)"></div><div class="skel" style="height:18px;width:60px;border-radius:var(--radius)"></div><div class="skel" style="height:18px;width:40px;border-radius:var(--radius)"></div></div></td>
+            <td><div class="skel" style="height:12px;width:90px"></div></td>
+            <td><div class="skel" style="height:18px;width:50px;border-radius:var(--radius)"></div></td>
+            <td><div style="display:flex;gap:6px"><div class="skel" style="height:24px;width:32px;border-radius:var(--radius)"></div><div class="skel" style="height:24px;width:32px;border-radius:var(--radius)"></div></div></td>
+          </tr>`).join('')}</tbody>
+        </table></div>
+      </div>
+      <div class="mobile-only mob-card-list">
+        ${[0, 1, 2, 3, 4, 5].map(() => `<div class="mob-card">
+          <div class="mob-card-header">
+            <div>
+              <div class="skel" style="height:16px;width:140px;margin-bottom:6px"></div>
+              <div class="skel" style="height:12px;width:160px"></div>
+            </div>
+            <div class="skel" style="height:18px;width:50px;border-radius:var(--radius)"></div>
+          </div>
+          <div class="mob-card-row">
+            <span class="mob-card-label">${t('user_phone')}</span>
+            <div class="skel" style="height:12px;width:100px"></div>
+          </div>
+          <div class="mob-card-row">
+            <span class="mob-card-label">${t('user_expiry')}</span>
+            <div class="skel" style="height:12px;width:80px"></div>
+          </div>
+          <div style="padding:10px 12px"><div class="skel" style="height:10px;width:60px;margin-bottom:6px"></div><div style="display:flex;gap:4px;flex-wrap:wrap"><div class="skel" style="height:18px;width:50px;border-radius:var(--radius)"></div><div class="skel" style="height:18px;width:60px;border-radius:var(--radius)"></div></div></div>
+          <div class="mob-card-actions"><div class="skel" style="height:24px;width:32px;border-radius:var(--radius)"></div><div class="skel" style="height:24px;width:32px;border-radius:var(--radius)"></div></div>
+        </div>`).join('')}
+      </div>
+    </div>
   </div>`;
     }
     async function loadUsers() {
       try {
-        const { ok, data } = await api('GET', '/api/users');
+        const cursor = _usersPagination.nextCursor ? `&startAfter=${encodeURIComponent(_usersPagination.nextCursor)}` : '';
+        const { ok, data } = await api('GET', `/api/users?limit=20${cursor}`);
         const el = $('users-table'); if (!el) return;
-        if (!ok || !data.length) { el.innerHTML = `<div style="padding:20px;color:var(--fg-muted);font-size:13px">${t('no_users')}</div>`; return; }
+        if (!ok || !data.users?.length) { el.innerHTML = `<div style="padding:20px;color:var(--fg-muted);font-size:13px" class="content-fade-in">${t('no_users')}</div>`; return; }
+
+        const users = data.users;
+        const pagination = data.pagination || {};
+        _usersPagination.nextCursor = pagination.nextCursor || null;
+        _usersPagination.hasMore = pagination.hasMore || false;
+        _usersPagination.page = _usersPagination.page + 1;
+
         const today = new Date(); today.setHours(0, 0, 0, 0);
 
-        const rows = data.map(u => {
+        const rows = users.map(u => {
           const exp = new Date(u.expiryDate); exp.setHours(0, 0, 0, 0);
           const daysLeft = Math.ceil((exp - today) / 86400000);
           const status = daysLeft < 0 ? 'expired' : daysLeft <= 7 ? 'soon' : 'active';
@@ -180,9 +277,16 @@ export function renderAdmin(tab) {
           return { u, exp, daysLeft, status, statusLabel, statusClass, topics, more, allTopics, editBtn, delBtn };
         });
 
+        // Fade out skeletons first
+        el.querySelectorAll('.skel').forEach(sk => sk.classList.add('fade-out'));
+        await new Promise(r => setTimeout(r, 180));
+
+        const startNum = ((_usersPagination.page - 1) * 20) + 1;
+        const endNum = startNum + users.length - 1;
+
         el.innerHTML = `
           <!-- Desktop table -->
-          <div class="desktop-only">
+          <div class="desktop-only content-fade-in">
             <div class="table-wrap"><table>
               <thead><tr><th>${t('user_name')}</th><th>${t('user_email')}</th><th>${t('user_phone')}</th><th>${t('user_topics')}</th><th>${t('user_expiry')}</th><th>${t('user_status')}</th><th>${t('user_actions')}</th></tr></thead>
               <tbody>${rows.map(({ u, statusClass, statusLabel, topics, more, editBtn, delBtn }) => `<tr>
@@ -195,9 +299,20 @@ export function renderAdmin(tab) {
                 <td style="display:flex;gap:6px">${editBtn}${delBtn}</td>
               </tr>`).join('')}</tbody>
             </table></div>
+            <div class="pagination content-fade-in">
+              <div class="pagination-info">Showing ${startNum}–${endNum} of ${_usersPagination.hasMore ? '999+' : endNum}</div>
+              <div class="pagination-controls">
+                <button class="pagination-btn" ${_usersPagination.page === 1 ? 'disabled' : ''} onclick="window._prevUsersPage()">
+                  <i class="fa-solid fa-chevron-left"></i> Previous
+                </button>
+                <button class="pagination-btn primary" ${!_usersPagination.hasMore ? 'disabled' : ''} onclick="window._nextUsersPage()">
+                  Next <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
           </div>
           <!-- Mobile cards -->
-          <div class="mobile-only mob-card-list">
+          <div class="mobile-only mob-card-list content-fade-in">
             ${rows.map(({ u, statusClass, statusLabel, allTopics, editBtn, delBtn }) => `
               <div class="mob-card">
                 <div class="mob-card-header">
@@ -213,6 +328,17 @@ export function renderAdmin(tab) {
                 <div class="mob-card-actions">${editBtn}${delBtn}</div>
               </div>
             `).join('')}
+          </div>
+          <div class="pagination content-fade-in mobile-only">
+            <div class="pagination-info">Page ${_usersPagination.page}${_usersPagination.hasMore ? '+' : ''}</div>
+            <div class="pagination-controls">
+              <button class="pagination-btn" ${_usersPagination.page === 1 ? 'disabled' : ''} onclick="window._prevUsersPage()">
+                <i class="fa-solid fa-chevron-left"></i> Previous
+              </button>
+              <button class="pagination-btn primary" ${!_usersPagination.hasMore ? 'disabled' : ''} onclick="window._nextUsersPage()">
+                Next <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
           </div>`;
       } catch (e) { toast('Failed to load users: ' + e.message, 'error'); }
     }
@@ -301,25 +427,91 @@ export async function deleteUser(uid_) {
     function adminResultsHTML() {
       return `<div style="animation:fadeUp .25s ease both">
     <div style="margin-bottom:24px">
-      <h1 style="font-family:var(--font-serif);font-size:26px;font-weight:600;margin-bottom:4px">${t('admin_results')}</h1>
+      <h1 class="admin-page-title">${t('admin_results')}</h1>
       <p style="color:var(--fg-muted);font-size:14px">All candidate assessment results</p>
     </div>
-    <div id="results-table"><div style="padding:20px;color:var(--fg-muted);font-size:13px">Loading…</div></div>
+    <div id="results-table">
+      <div class="desktop-only">
+        <div class="table-wrap"><table>
+          <thead><tr><th>${t('name')}</th><th>${t('email')}</th><th>Topic</th>
+            <th>${t('score')}</th><th>%</th><th>${t('time')}</th><th>${t('result')}</th><th>Source</th><th>Quiz</th><th>Date</th><th></th></tr></thead>
+          <tbody>${[0, 1, 2, 3, 4, 5].map(() => `<tr>
+            <td><div class="skel" style="height:14px;width:120px"></div></td>
+            <td><div class="skel" style="height:12px;width:150px"></div></td>
+            <td><div class="skel" style="height:18px;width:90px;border-radius:var(--radius)"></div></td>
+            <td><div class="skel" style="height:14px;width:60px"></div></td>
+            <td><div class="skel" style="height:14px;width:50px"></div></td>
+            <td><div class="skel" style="height:12px;width:70px"></div></td>
+            <td><div class="skel" style="height:18px;width:40px;border-radius:var(--radius)"></div></td>
+            <td><div class="skel" style="height:18px;width:45px;border-radius:var(--radius)"></div></td>
+            <td><div style="display:flex;gap:4px"><div class="skel" style="height:24px;width:28px;border-radius:var(--radius)"></div><div class="skel" style="height:24px;width:28px;border-radius:var(--radius)"></div></div></td>
+            <td><div class="skel" style="height:12px;width:60px"></div></td>
+            <td><div class="skel" style="height:24px;width:28px;border-radius:var(--radius)"></div></td>
+          </tr>`).join('')}</tbody>
+        </table></div>
+      </div>
+      <div class="mobile-only mob-card-list">
+        ${[0, 1, 2, 3, 4, 5].map(() => `<div class="mob-card">
+          <div class="mob-card-header">
+            <div>
+              <div class="skel" style="height:16px;width:140px;margin-bottom:6px"></div>
+              <div class="skel" style="height:12px;width:150px"></div>
+            </div>
+            <div class="skel" style="height:18px;width:50px;border-radius:var(--radius)"></div>
+          </div>
+          <div class="mob-card-row">
+            <span class="mob-card-label">Topic</span>
+            <div class="skel" style="height:18px;width:80px;border-radius:var(--radius)"></div>
+          </div>
+          <div class="mob-card-row">
+            <span class="mob-card-label">${t('score')}</span>
+            <div class="skel" style="height:14px;width:80px"></div>
+          </div>
+          <div class="mob-card-row">
+            <span class="mob-card-label">${t('time')}</span>
+            <div class="skel" style="height:12px;width:60px"></div>
+          </div>
+          <div class="mob-card-row">
+            <span class="mob-card-label">Source</span>
+            <div class="skel" style="height:18px;width:50px;border-radius:var(--radius)"></div>
+          </div>
+          <div class="mob-card-row">
+            <span class="mob-card-label">Date</span>
+            <div class="skel" style="height:12px;width:50px"></div>
+          </div>
+          <div class="mob-card-actions"><div class="skel" style="height:24px;width:60px;border-radius:var(--radius)"></div><div class="skel" style="height:24px;width:60px;border-radius:var(--radius)"></div><div class="skel" style="height:24px;width:50px;border-radius:var(--radius);background:color-mix(in srgb,var(--error) 15%,transparent)"></div></div>
+        </div>`).join('')}
+      </div>
+    </div>
   </div>`;
     }
     async function loadResults() {
       try {
-        const { ok, data } = await api('GET', '/api/results?limit=200');
+        const cursor = _resultsPagination.nextCursor ? `&startAfter=${encodeURIComponent(_resultsPagination.nextCursor)}` : '';
+        const { ok, data } = await api('GET', `/api/results?limit=20${cursor}`);
         const el = $('results-table'); if (!el) return;
-        if (!ok || !data.length) { el.innerHTML = `<div style="padding:20px;color:var(--fg-muted);font-size:13px">${t('no_results')}</div>`; return; }
+        if (!ok || !data.results?.length) { el.innerHTML = `<div style="padding:20px;color:var(--fg-muted);font-size:13px" class="content-fade-in">${t('no_results')}</div>`; return; }
+
+        const results = data.results;
+        const pagination = data.pagination || {};
+        _resultsPagination.nextCursor = pagination.nextCursor || null;
+        _resultsPagination.hasMore = pagination.hasMore || false;
+        _resultsPagination.page = _resultsPagination.page + 1;
+
+        // Fade out skeletons first
+        el.querySelectorAll('.skel').forEach(sk => sk.classList.add('fade-out'));
+        await new Promise(r => setTimeout(r, 180));
+
+        const startNum = ((_resultsPagination.page - 1) * 20) + 1;
+        const endNum = startNum + results.length - 1;
 
         el.innerHTML = `
           <!-- Desktop table -->
-          <div class="desktop-only">
+          <div class="desktop-only content-fade-in">
             <div class="table-wrap"><table>
               <thead><tr><th>${t('name')}</th><th>${t('email')}</th><th>Topic</th>
                 <th>${t('score')}</th><th>%</th><th>${t('time')}</th><th>${t('result')}</th><th>Source</th><th>Quiz</th><th>Date</th><th></th></tr></thead>
-              <tbody>${data.map(r => `<tr>
+              <tbody>${results.map(r => `<tr>
                 <td style="font-weight:500">${r.userName || '-'}</td>
                 <td style="font-size:12px;font-family:var(--font-mono)">${r.userEmail || '-'}</td>
                 <td><span class="badge badge-default">${r.profession || '-'}</span></td>
@@ -341,10 +533,21 @@ export async function deleteUser(uid_) {
                 </td>
               </tr>`).join('')}</tbody>
             </table></div>
+            <div class="pagination content-fade-in">
+              <div class="pagination-info">Showing ${startNum}–${endNum} of ${_resultsPagination.hasMore ? '999+' : endNum}</div>
+              <div class="pagination-controls">
+                <button class="pagination-btn" ${_resultsPagination.page === 1 ? 'disabled' : ''} onclick="window._prevResultsPage()">
+                  <i class="fa-solid fa-chevron-left"></i> Previous
+                </button>
+                <button class="pagination-btn primary" ${!_resultsPagination.hasMore ? 'disabled' : ''} onclick="window._nextResultsPage()">
+                  Next <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
           </div>
           <!-- Mobile cards -->
-          <div class="mobile-only mob-card-list">
-            ${data.map(r => `
+          <div class="mobile-only mob-card-list content-fade-in">
+            ${results.map(r => `
               <div class="mob-card" id="mob-result-${r.resultId}">
                 <div class="mob-card-header">
                   <div>
@@ -382,6 +585,17 @@ export async function deleteUser(uid_) {
                 </div>
               </div>
             `).join('')}
+          </div>
+          <div class="pagination content-fade-in mobile-only">
+            <div class="pagination-info">Page ${_resultsPagination.page}${_resultsPagination.hasMore ? '+' : ''}</div>
+            <div class="pagination-controls">
+              <button class="pagination-btn" ${_resultsPagination.page === 1 ? 'disabled' : ''} onclick="window._prevResultsPage()">
+                <i class="fa-solid fa-chevron-left"></i> Previous
+              </button>
+              <button class="pagination-btn primary" ${!_resultsPagination.hasMore ? 'disabled' : ''} onclick="window._nextResultsPage()">
+                Next <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
           </div>`;
       } catch (e) { toast('Failed to load results: ' + e.message, 'error'); }
     }
@@ -404,90 +618,142 @@ export async function deleteAdminResult(resultId, btn) {
 
     /* ─ Admin Quiz Library ─ */
     const PROFESSIONS_LIST_ADMIN = PROFESSIONS.map(p => ({ id: p.id, label: p.label_en }));
-    /* All quizzes cache — loaded once per tab visit, filtered client-side */
     let _adminQuizCache = null;
 
     function adminQuizzesHTML() {
       const profOpts = PROFESSIONS_LIST_ADMIN.map(p => `<option value="${p.id}">${p.label}</option>`).join('');
       return `<div style="animation:fadeUp .25s ease both">
     <div style="margin-bottom:20px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
-  <div>
-    <h1 style="font-family:var(--font-serif);font-size:26px;font-weight:600;margin-bottom:4px">${t('admin_quizzes')}</h1>
-    <p style="color:var(--fg-muted);font-size:14px">All stored quizzes — served as AI fallback when models are unavailable.</p>
-  </div>
-  <button class="btn btn-ghost btn-sm" onclick="window._adminQuizCache=null;window._loadAdminQuizzes()">
+      <div>
+        <h1 class="admin-page-title">${t('admin_quizzes')}</h1>
+        <p style="color:var(--fg-muted);font-size:14px">All stored quizzes — served as AI fallback when models are unavailable.</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="window._adminQuizCache=null;window._loadAdminQuizzes()">
         <i class="fa-solid fa-rotate-right"></i> Refresh
       </button>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:flex-end" class="admin-filter-row">
-    <div style="display:flex;flex-direction:column;gap:4px">
-    <label style="font-size:11px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.05em">Filter by Topic</label>
-    <select id="ql-pid" onchange="window._renderAdminQuizTable()" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--fg);font-size:13px;min-width:180px">
+    <div class="quiz-filters content-fade-in">
+      <div class="quiz-filter-item">
+        <label class="quiz-filter-label">Filter by Topic</label>
+        <select id="ql-pid" onchange="window._renderAdminQuizTable()" class="quiz-filter-select">
           <option value="">All Topics</option>${profOpts}
         </select>
       </div>
-    <div style="display:flex;flex-direction:column;gap:4px">
-    <label style="font-size:11px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.05em">Language</label>
-    <select id="ql-lang" onchange="window._renderAdminQuizTable()" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--fg);font-size:13px">
+      <div class="quiz-filter-item">
+        <label class="quiz-filter-label">Language</label>
+        <select id="ql-lang" onchange="window._renderAdminQuizTable()" class="quiz-filter-select">
           <option value="">All</option><option value="en">English</option><option value="ur">Urdu</option>
         </select>
       </div>
-    <div style="display:flex;flex-direction:column;gap:4px">
-    <label style="font-size:11px;font-weight:600;color:var(--fg-muted);text-transform:uppercase;letter-spacing:.05em">Questions</label>
-    <select id="ql-count" onchange="window._renderAdminQuizTable()" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--fg);font-size:13px">
+      <div class="quiz-filter-item">
+        <label class="quiz-filter-label">Questions</label>
+        <select id="ql-count" onchange="window._renderAdminQuizTable()" class="quiz-filter-select">
           <option value="">Any</option><option value="5">5</option><option value="10">10</option><option value="15">15</option><option value="30">30</option><option value="50">50</option>
         </select>
       </div>
     </div>
     <div id="ql-stats" style="margin-bottom:12px"></div>
-    <div id="quiz-lib-table"><div class="loader-wrap" style="padding:40px"><div class="spinner"></div><div class="loader-sub">Loading quizzes…</div></div></div>
+    <div id="quiz-lib-table">
+      <div class="desktop-only">
+        <div class="table-wrap"><table>
+          <thead><tr><th>Quiz ID</th><th>Topic</th><th>Lang</th><th>Qs</th><th>Created</th><th>Actions</th></tr></thead>
+          <tbody>${[0, 1, 2, 3, 4, 5].map(() => `<tr>
+            <td><div class="skel" style="height:11px;width:180px"></div></td>
+            <td><div style="display:flex;align-items:center;gap:6px"><div class="skel" style="width:22px;height:22px;border-radius:4px"></div><div class="skel" style="height:14px;width:140px"></div></div></td>
+            <td><div class="skel" style="height:18px;width:45px;border-radius:var(--radius)"></div></td>
+            <td><div class="skel" style="height:14px;width:30px"></div></td>
+            <td><div class="skel" style="height:12px;width:60px"></div></td>
+            <td><div style="display:flex;gap:4px"><div class="skel" style="height:24px;width:28px;border-radius:var(--radius)"></div><div class="skel" style="height:24px;width:28px;border-radius:var(--radius)"></div></div></td>
+          </tr>`).join('')}</tbody>
+        </table></div>
+      </div>
+      <div class="mobile-only mob-card-list">
+        ${[0, 1, 2, 3, 4, 5].map(() => `<div class="mob-card">
+          <div class="mob-card-header">
+            <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+              <div class="skel" style="width:32px;height:32px;border-radius:6px"></div>
+              <div style="min-width:0;flex:1">
+                <div class="skel" style="height:16px;width:160px;margin-bottom:4px"></div>
+                <div class="skel" style="height:10px;width:120px"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:4px;flex-shrink:0">
+              <div class="skel" style="height:18px;width:45px;border-radius:var(--radius)"></div>
+              <div class="skel" style="height:18px;width:35px;border-radius:var(--radius)"></div>
+            </div>
+          </div>
+          <div class="mob-card-row">
+            <span class="mob-card-label">Created</span>
+            <div class="skel" style="height:12px;width:50px"></div>
+          </div>
+          <div class="mob-card-actions"><div class="skel" style="height:24px;width:60px;border-radius:var(--radius)"></div><div class="skel" style="height:24px;width:50px;border-radius:var(--radius)"></div></div>
+        </div>`).join('')}
+      </div>
+    </div>
   </div>`;
     }
 
 export async function loadAdminQuizzes() {
       const el = $('quiz-lib-table'); if (!el) return;
-      if (_adminQuizCache) { renderAdminQuizTable(); return; }
-      el.innerHTML = `<div class="loader-wrap" style="padding:40px"><div class="spinner"></div><div class="loader-sub">Loading quizzes…</div></div>`;
+      // Reset pagination state
+      _quizzesPagination = { nextCursor: null, hasMore: false, page: 0, loading: false };
+      _adminQuizCache = null;
+      // Render shimmer first (adminQuizzesHTML already rendered)
+      // Then load data
       try {
-        // Fetch up to 500 quizzes using the public endpoint (no filter needed, admin can see all)
-        const { ok, data } = await api('GET', '/api/quizzes/public?limit=100', null, false);
+        const { ok, data } = await api('GET', '/api/quizzes/public?limit=20', null, false);
         if (!ok) throw new Error(data.error || 'Failed to load quizzes');
-        _adminQuizCache = data.quizzes || [];
+        _adminQuizCache = { quizzes: data.quizzes || [], pagination: data.pagination || {} };
+        _quizzesPagination.nextCursor = data.pagination?.nextCursor || null;
+        _quizzesPagination.hasMore = data.pagination?.hasMore || false;
+        _quizzesPagination.page = 1;
         renderAdminQuizTable();
       } catch (e) {
-        if (el) el.innerHTML = `<div style="padding:20px;color:var(--error);font-size:13px"><i class="fa-solid fa-circle-exclamation"></i> ${e.message}</div>`;
+        if (el) el.innerHTML = `<div style="padding:20px;color:var(--error);font-size:13px" class="content-fade-in"><i class="fa-solid fa-circle-exclamation"></i> ${e.message}</div>`;
       }
     }
 
 export function renderAdminQuizTable() {
-      const el = $('quiz-lib-table'), statsEl = $('ql-stats'); if (!el || !_adminQuizCache) return;
+      const el = $('quiz-lib-table'), statsEl = $('ql-stats'); if (!el) return;
+      if (!_adminQuizCache) {
+        // Show shimmer while loading
+        return;
+      }
+
       const pid = ($('ql-pid') || {}).value || '';
       const lang_ = ($('ql-lang') || {}).value || '';
       const count = ($('ql-count') || {}).value || '';
 
-      let list = _adminQuizCache;
+      // Client-side filtering of cached data
+      let list = _adminQuizCache.quizzes || [];
       if (pid) list = list.filter(q => q.professionId === pid);
       if (lang_) list = list.filter(q => (q.lang || '') === lang_);
       if (count) list = list.filter(q => String(q.count) === count);
 
-      if (statsEl) statsEl.innerHTML = `
-    <span class="badge badge-default">${list.length} of ${_adminQuizCache.length} quiz${_adminQuizCache.length !== 1 ? 'zes' : ''}</span>
-    ${pid || lang_ || count ? `<button class="btn btn-ghost btn-sm" style="margin-inline-start:6px" onclick="
-      const s=['ql-pid','ql-lang','ql-count'];s.forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});window._renderAdminQuizTable()">
-      <i class='fa-solid fa-xmark'></i> Clear filters</button>`: ''}`;
+      if (statsEl) {
+        statsEl.innerHTML = `<span class="content-fade-in badge badge-default">${list.length} quiz${list.length !== 1 ? 'zes' : ''}</span>
+        ${pid || lang_ || count ? `<button class="content-fade-in btn btn-ghost btn-sm" style="margin-inline-start:6px" onclick="
+          const s=['ql-pid','ql-lang','ql-count'];s.forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});window._renderAdminQuizTable()">
+          <i class='fa-solid fa-xmark'></i> Clear filters</button>`: ''}`;
+      }
 
       if (!list.length) {
-        el.innerHTML = `<div style="padding:40px;text-align:center;color:var(--fg-muted)">
+        el.innerHTML = `<div style="padding:40px;text-align:center;color:var(--fg-muted)" class="content-fade-in">
       <i class="fa-solid fa-inbox" style="font-size:32px;margin-bottom:12px;display:block;opacity:.4"></i>
-      <div style="font-size:14px">${_adminQuizCache.length ? 'No quizzes match these filters.' : 'No quizzes stored yet.'}</div>
-      ${_adminQuizCache.length === 0 ? '<div style="font-size:13px;margin-top:4px">Quizzes are saved automatically when users generate them.</div>' : ''}
+      <div style="font-size:14px">No quizzes match these filters.</div>
     </div>`;
         return;
       }
 
+      const startNum = 1;
+      const endNum = list.length;
+
+      // Fade out skeletons before showing content
+      el.querySelectorAll('.skel').forEach(sk => sk.classList.add('fade-out'));
+
       el.innerHTML = `
         <!-- Desktop table -->
-        <div class="desktop-only">
+        <div class="desktop-only content-fade-in">
           <div class="table-wrap"><table>
             <thead><tr><th>Quiz ID</th><th>Topic</th><th>Lang</th><th>Qs</th><th>Created</th><th>Actions</th></tr></thead>
             <tbody>${list.map(q => {
@@ -513,7 +779,7 @@ export function renderAdminQuizTable() {
           </table></div>
         </div>
         <!-- Mobile cards -->
-        <div class="mobile-only mob-card-list">
+        <div class="mobile-only mob-card-list content-fade-in">
           ${list.map(q => {
           const prof = q.professionId ? PROF_MAP[q.professionId] : null;
           const label = prof ? prof.label_en : (q.topic || q.professionId || '—');
@@ -538,6 +804,13 @@ export function renderAdminQuizTable() {
           </div>
             </div>`;
         }).join('')}
+        </div>
+        <div class="pagination content-fade-in">
+          <div class="pagination-info">Showing ${startNum}–${endNum} quizzes (filtered view)</div>
+          <div class="pagination-controls">
+            <button class="pagination-btn" disabled><i class="fa-solid fa-chevron-left"></i> Previous</button>
+            <button class="pagination-btn" disabled>Next <i class="fa-solid fa-chevron-right"></i></button>
+          </div>
         </div>`;
     }
 
@@ -550,6 +823,12 @@ Object.assign(window, {
   _deleteAdminResult: deleteAdminResult,
   _loadAdminQuizzes: loadAdminQuizzes,
   _renderAdminQuizTable: renderAdminQuizTable,
+  _nextUsersPage: () => { if (!_usersPagination.hasMore) return; loadUsers(); },
+  _prevUsersPage: () => { if (_usersPagination.page <= 1) return; _usersPagination.nextCursor = null; _usersPagination.page = Math.max(0, _usersPagination.page - 2); loadUsers(); },
+  _nextResultsPage: () => { if (!_resultsPagination.hasMore) return; loadResults(); },
+  _prevResultsPage: () => { if (_resultsPagination.page <= 1) return; _resultsPagination.nextCursor = null; _resultsPagination.page = Math.max(0, _resultsPagination.page - 2); loadResults(); },
+  _nextQuizzesPage: () => { /* Client-side filtered, no pagination */ },
+  _prevQuizzesPage: () => { /* Client-side filtered, no pagination */ },
   _copyCredentials: () => {
     const name = $('u-name')?.value.trim();
     const email = $('u-email')?.value.trim();

@@ -156,14 +156,15 @@ async function fsDel(env, collection, docId) {
 }
 
 /**
- * Run a structured query.
+ * Run a structured query with pagination support.
  * collectionId: e.g. 'results'
- * filters: array of { field, op, value } — op is Firestore operator string
- *   e.g. { field: 'userId', op: 'EQUAL', value: 'abc' }
- * orderBy: { field, direction } — direction: 'ASCENDING' | 'DESCENDING'
- * limitCount: number
+ * filters: array of { field, op, value }
+ * orderBy: { field, direction }
+ * limitCount: number (max 500)
+ * startAt: value for cursor-based pagination (the last orderBy field value from previous page)
+ * startAfterDocId: document ID to start after (for precise cursor positioning)
  */
-async function fsQuery(env, collectionId, filters = [], orderBy = null, limitCount = null) {
+async function fsQuery(env, collectionId, filters = [], orderBy = null, limitCount = null, startAt = null, startAfterDocId = null) {
     const token = await getAccessToken(env);
     const url = `${fsBase(env)}:runQuery`;
 
@@ -192,8 +193,33 @@ async function fsQuery(env, collectionId, filters = [], orderBy = null, limitCou
 
     const query = { from: [{ collectionId }] };
     if (where) query.where = where;
-    if (orderBy) query.orderBy = [{ field: { fieldPath: orderBy.field }, direction: orderBy.direction }];
+
+    // Build orderBy with __name__ for consistent cursor pagination
+    if (orderBy) {
+        query.orderBy = [
+            { field: { fieldPath: orderBy.field }, direction: orderBy.direction }
+        ];
+        // Add __name__ as secondary sort for stable pagination
+        if (orderBy.field !== '__name__') {
+            query.orderBy.push({ field: { fieldPath: '__name__' }, direction: orderBy.direction });
+        }
+    }
+
     if (limitCount) query.limit = limitCount;
+
+    // Cursor-based pagination
+    if (startAt !== null || startAfterDocId) {
+        const startValues = [];
+        if (startAt !== null) {
+            startValues.push(toFsValue(startAt));
+        }
+        if (startAfterDocId) {
+            startValues.push(toFsValue(startAfterDocId));
+        }
+        if (startValues.length > 0) {
+            query.startAfter = { values: startValues };
+        }
+    }
 
     const r = await fetch(url, {
         method: 'POST',
@@ -280,8 +306,8 @@ async function deleteUser(env, id) {
     for (const r of results) await fsDel(env, 'results', r.resultId);
 }
 
-async function listUsers(env) {
-    return fsQuery(env, 'users', [], { field: 'createdAt', direction: 'ASCENDING' });
+async function listUsers(env, limit = 20, startAfter = null) {
+    return fsQuery(env, 'users', [], { field: 'createdAt', direction: 'ASCENDING' }, limit, startAfter);
 }
 
 /* ── Results ── */
@@ -311,14 +337,14 @@ async function deleteResult(env, resultId) {
     return true;
 }
 
-async function listResults(env, limit = 200) {
-    return fsQuery(env, 'results', [], { field: 'createdAt', direction: 'DESCENDING' }, limit);
+async function listResults(env, limit = 20, startAfter = null) {
+    return fsQuery(env, 'results', [], { field: 'createdAt', direction: 'DESCENDING' }, limit, startAfter);
 }
 
-async function listResultsForUser(env, userId, limit = 200) {
+async function listResultsForUser(env, userId, limit = 5, startAfter = null) {
     return fsQuery(env, 'results', [
         { field: 'userId', op: 'EQUAL', value: userId }
-    ], { field: 'createdAt', direction: 'DESCENDING' }, limit);
+    ], { field: 'createdAt', direction: 'DESCENDING' }, limit, startAfter);
 }
 
 async function getResult(env, id) { return fsGet(env, 'results', id); }
@@ -516,7 +542,25 @@ async function routeLogin(req, env) {
 
 async function routeListUsers(req, env) {
     if (!await authAdmin(req, env)) return bad('Unauthorized', 401);
-    return ok((await listUsers(env)).map(safe));
+    const url = new URL(req.url);
+    const limit = Math.min(parseInt(url.searchParams.get('limit')) || 20, 100);
+    const startAfter = url.searchParams.get('startAfter') || null;
+
+    const users = await listUsers(env, limit, startAfter);
+
+    // Get the last user's createdAt for next page cursor
+    const lastUser = users.length > 0 ? users[users.length - 1] : null;
+    const nextCursor = lastUser ? lastUser.createdAt : null;
+    const hasMore = users.length === limit;
+
+    return ok({
+        users: users.map(safe),
+        pagination: {
+            limit,
+            nextCursor: hasMore ? nextCursor : null,
+            hasMore
+        }
+    });
 }
 async function routeGetUser(req, env, id) {
     if (!await authAdmin(req, env)) return bad('Unauthorized', 401);
@@ -581,10 +625,30 @@ async function routeListResults(req, env) {
     const u = await authUser(req, env);
     if (!u) return bad('Unauthorized', 401);
     const url = new URL(req.url);
-    const lim = Math.min(parseInt(url.searchParams.get('limit')) || 200, 500);
+    const limit = Math.min(parseInt(url.searchParams.get('limit')) || 20, 100);
+    const startAfter = url.searchParams.get('startAfter') || null;
     const isMe = url.searchParams.get('user') === 'me';
-    if ((u.role === 'admin' || u.uid === 'admin') && !isMe) return ok(await listResults(env, lim));
-    return ok(await listResultsForUser(env, u.uid, lim));
+
+    let results;
+    if ((u.role === 'admin' || u.uid === 'admin') && !isMe) {
+        results = await listResults(env, limit, startAfter);
+    } else {
+        results = await listResultsForUser(env, u.uid, limit, startAfter);
+    }
+
+    // Get the last result's createdAt for next page cursor
+    const lastResult = results.length > 0 ? results[results.length - 1] : null;
+    const nextCursor = lastResult ? lastResult.createdAt : null;
+    const hasMore = results.length === limit;
+
+    return ok({
+        results,
+        pagination: {
+            limit,
+            nextCursor: hasMore ? nextCursor : null,
+            hasMore
+        }
+    });
 }
 async function routeGetResult(req, env, id) {
     const u = await authUser(req, env);
@@ -635,27 +699,73 @@ async function routeGenerate(req, env) {
     const topicKey = normalizeTopicKey(topic, professionId);
     const langKey = normalizeLangKey(lang || 'English');
 
-    const prompt = `You are an expert exam question writer for the AJK (Azad Jammu & Kashmir) Public Service Commission.
+    const isUrduIslamicSubject = /urdu|islamic|islamiat/i.test(topic);
+    const effectiveLang = isUrduIslamicSubject ? 'Urdu' : (lang || 'English');
+    const isMathSci = /physics|math|stat|chem|econ|computer/i.test(topic);
+
+    const bloomCounts = {
+        Knowledge: Math.round(count * 0.20),
+        Understanding: Math.round(count * 0.25),
+        Applying: Math.round(count * 0.20),
+        Analyzing: Math.round(count * 0.15),
+        Evaluating: Math.round(count * 0.10),
+        Creating: Math.round(count * 0.10),
+    };
+
+    const prompt = `You are an expert PSC-level academic content designer and exam question writer specializing in competitive exams for AJKPSC, FPSC, PPSC, KPPSC, and BPSC Lecturer and Assistant Professor posts.
 
 Topic: ${topic}
 Concepts: ${concepts || topic}
-Language: ${lang || 'English'}
-Target Level: BSc/MSc (High difficulty, AJKPSC Standard)
+Language: ${effectiveLang}
+Profession/Subject ID: ${professionId || 'General'}
+Target Level: BS / Master level (High difficulty, PSC Lecturer Standard)
+Past Paper Alignment: Align questions with high-frequency areas from AJKPSC, FPSC, PPSC, KPPSC, BPSC past papers.
 
-Cognitive Distribution Rules (CRITICAL):
-- 40% Knowledge based (Definitions, facts, core principles)
-- 30% Understanding based (Comparison, interpretation, conceptual depth)
-- 30% Application based (Problem solving, scenarios, calculations)
+STEP 1 — INTERNAL ANALYSIS (do not output this)
+Before generating, internally analyze:
+- BS/Master-level depth for the given topic and concepts
+- High-frequency exam areas from PSC past papers
+- Conceptual traps and commonly confused areas for this topic
 
-General Rules:
-- Write exactly ${count} multiple-choice questions.
-- Distribute questions evenly across all listed concepts.
-- ${isUrdu ? 'Write ALL questions, options, and explanations in Urdu Nastaliq script only.' : 'Write everything in English.'}
-- Each question must have exactly 4 options.
-- correctAnswer must be a byte-for-byte copy of one option string.
-- No option labels like A. B. C. D. in the options strings.
-- explanation: Provide a detailed "AI Tutor" style step-by-step explanation (2-3 sentences) explaining WHY the correct answer is right and why others are wrong.
-- For any mathematical expressions, use LaTeX wrapped in $...$ (inline) or $$...$$ (display).
+STEP 2 — BLOOM'S TAXONOMY DISTRIBUTION (CRITICAL)
+Distribute all ${count} questions EXACTLY across Bloom's levels:
+- Knowledge (facts, definitions, recall): ${bloomCounts.Knowledge} questions
+- Understanding (comparison, interpretation, conceptual depth): ${bloomCounts.Understanding} questions
+- Applying (calculations, problem solving, real-world use): ${bloomCounts.Applying} questions
+- Analyzing (cause-effect, relationships, breakdown): ${bloomCounts.Analyzing} questions
+- Evaluating (judgment, critique, best-option selection): ${bloomCounts.Evaluating} questions
+- Creating (advanced synthesis, novel conceptual application): ${bloomCounts.Creating} questions
+
+STEP 3 — DIFFICULTY DISTRIBUTION
+- 30% Basic — foundational recall and definition questions
+- 40% Conceptual — deeper understanding, comparison, analysis
+- 30% Advanced — application, evaluation, scenario-based
+
+STEP 4 — QUESTION TYPE VARIETY (include a balanced mix)
+1. Conceptual MCQs — test understanding of principles
+2. Analytical MCQs — identify relationships or cause-effect
+3. Application-based MCQs — apply a formula or principle to a scenario
+4. Statement-based MCQs — "Which of the following statements is correct?"
+5. Assertion-Reason MCQs — "Assertion: X. Reason: Y. Which is correct?"
+6. Scenario-based MCQs — short situation followed by a question
+
+STEP 5 — SUBJECT-SPECIFIC FORMATTING
+${isMathSci ? `Math/Science/Economics: Render all formulas in LaTeX — inline: $...$ | display: $$...$$
+Example: $$\\int_a^b f(x)\\,dx$$ or $P(A|B) = \\frac{P(A \\cap B)}{P(B)}$` : ''}
+${/computer/i.test(topic) ? `Computer Science: Include code snippets in triple backticks with language label where relevant.` : ''}
+${/chem/i.test(topic) ? `Chemistry: Include balanced chemical equations in questions where relevant.` : ''}
+${effectiveLang === 'Urdu' ? `Urdu/Islamic Studies: Write ALL questions, options, and explanations fully in Urdu Nastaliq script. No English except unavoidable proper nouns.` : ''}
+
+STEP 6 — MCQ QUALITY RULES
+- Write exactly ${count} multiple-choice questions
+- Distribute questions evenly across all listed concepts
+- ${effectiveLang === 'Urdu' ? 'Write ALL questions, options, and explanations in Urdu Nastaliq script only.' : 'Write everything in English.'}
+- Each question must have exactly 4 options
+- correctAnswer must be a byte-for-byte copy of one option string
+- No option labels like A. B. C. D. inside the option strings
+- explanation: 2-4 sentence AI Tutor style — explain WHY the correct answer is right AND why the other options are wrong
+- Avoid ambiguous wording; use precise PSC Lecturer-level academic language
+- Do not repeat concepts across questions
 
 Return ONLY valid JSON, no markdown:
 {
@@ -665,7 +775,10 @@ Return ONLY valid JSON, no markdown:
       "options": ["...", "...", "...", "..."],
       "correctAnswer": "...",
       "explanation": "...",
-      "cognitiveLevel": "Knowledge | Understanding | Application"
+      "cognitiveLevel": "Knowledge | Understanding | Application",
+      "bloomsLevel": "Knowledge | Understanding | Applying | Analyzing | Evaluating | Creating",
+      "difficulty": "Basic | Conceptual | Advanced",
+      "questionType": "Conceptual | Analytical | Application | Statement | AssertionReason | Scenario"
     }
   ]
 }`;
@@ -704,19 +817,35 @@ async function routePublicQuizzes(req, env) {
     const url = new URL(req.url);
     const professionId = url.searchParams.get('professionId') || '';
     const lang = url.searchParams.get('lang') || '';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '24') || 24, 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0') || 0;
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20') || 20, 100);
+    const startAfter = url.searchParams.get('startAfter') || null;
 
     const filters = [];
     if (professionId) filters.push({ field: 'professionId', op: 'EQUAL', value: professionId });
     if (lang) filters.push({ field: 'lang', op: 'EQUAL', value: normalizeLangKey(lang) });
 
-    const all = await fsQuery(env, 'quizzes', filters, { field: 'createdAt', direction: 'DESCENDING' }, offset + limit + 100);
-    const total = all.length;
-    const page = all.slice(offset, offset + limit);
+    const quizzes = await fsQuery(env, 'quizzes', filters, { field: 'createdAt', direction: 'DESCENDING' }, limit, startAfter);
+
+    // Get the last quiz's createdAt for next page cursor
+    const lastQuiz = quizzes.length > 0 ? quizzes[quizzes.length - 1] : null;
+    const nextCursor = lastQuiz ? lastQuiz.createdAt : null;
+    const hasMore = quizzes.length === limit;
+
     return ok({
-        total,
-        quizzes: page.map(q => ({ quizId: q.quizId, topic: q.topic, professionId: q.professionId, lang: q.lang, count: q.count, createdAt: q.createdAt }))
+        total: hasMore ? -1 : quizzes.length, // -1 means there are more results
+        quizzes: quizzes.map(q => ({
+            quizId: q.quizId,
+            topic: q.topic,
+            professionId: q.professionId,
+            lang: q.lang,
+            count: q.count,
+            createdAt: q.createdAt
+        })),
+        pagination: {
+            limit,
+            nextCursor: hasMore ? nextCursor : null,
+            hasMore
+        }
     });
 }
 
@@ -727,17 +856,43 @@ async function routeListQuizzes(req, env) {
     const professionId = url.searchParams.get('professionId') || '';
     const lang = url.searchParams.get('lang') || '';
     const count = parseInt(url.searchParams.get('count') || '0') || 0;
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20') || 20, 100);
+    const startAfter = url.searchParams.get('startAfter') || null;
+
     if (!topic && !professionId) return bad('topic or professionId required');
     if (!count) return bad('count required');
+
     const topicKey = normalizeTopicKey(topic, professionId);
     const langKey = normalizeLangKey(lang);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50') || 50, 200);
-    const quizzes = await fsQuery(env, 'quizzes', [
+
+    const filters = [
         { field: 'topicKey', op: 'EQUAL', value: topicKey },
         { field: 'lang', op: 'EQUAL', value: langKey },
         { field: 'count', op: 'EQUAL', value: count },
-    ], { field: 'createdAt', direction: 'DESCENDING' }, limit);
-    return ok({ quizzes: quizzes.map(q => ({ quizId: q.quizId, topic: q.topic, professionId: q.professionId, lang: q.lang, count: q.count, createdAt: q.createdAt })) });
+    ];
+
+    const quizzes = await fsQuery(env, 'quizzes', filters, { field: 'createdAt', direction: 'DESCENDING' }, limit, startAfter);
+
+    // Get the last quiz's createdAt for next page cursor
+    const lastQuiz = quizzes.length > 0 ? quizzes[quizzes.length - 1] : null;
+    const nextCursor = lastQuiz ? lastQuiz.createdAt : null;
+    const hasMore = quizzes.length === limit;
+
+    return ok({
+        quizzes: quizzes.map(q => ({
+            quizId: q.quizId,
+            topic: q.topic,
+            professionId: q.professionId,
+            lang: q.lang,
+            count: q.count,
+            createdAt: q.createdAt
+        })),
+        pagination: {
+            limit,
+            nextCursor: hasMore ? nextCursor : null,
+            hasMore
+        }
+    });
 }
 
 async function routeGetQuiz(req, env, id) {

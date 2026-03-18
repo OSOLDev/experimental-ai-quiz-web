@@ -28,14 +28,22 @@
         </a>
         <div class="topbar-center"></div>
         <div class="topbar-right">
-          <button class="lang-btn" id="lang-toggle-btn" onclick="window._toggleLang()" style="display:none">
-            <i class="fa-solid fa-language"></i>
-            <span id="lang-label">اردو</span>
-          </button>
-          <button class="lp-theme-toggle" onclick="window._toggleTheme()" title="Toggle theme">
-            <i class="fa-solid fa-moon lp-moon"></i>
-            <i class="fa-solid fa-sun lp-sun"></i>
-          </button>
+          <div class="dropdown" id="notif-dd" style="display:none">
+            <button class="topbar-icon-btn" onclick="window._toggleNotifMenu(event)" title="Notifications" id="notif-btn">
+              <i class="fa-solid fa-bell"></i>
+              <span class="notif-dot" id="notif-dot" style="display:none"></span>
+            </button>
+            <div class="dropdown-menu notif-menu" id="notif-menu">
+              <div class="notif-header">
+                <div class="notif-title">Notifications</div>
+                <button class="btn btn-ghost btn-sm" style="height:24px;font-size:11px" onclick="window._markAllRead(event)">Mark all as read</button>
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="notif-list" id="notif-list">
+                <div class="notif-empty">No new notifications</div>
+              </div>
+            </div>
+          </div>
           <div id="user-chip-container"></div>
         </div>
       </div>
